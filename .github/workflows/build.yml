@@ -12,7 +12,7 @@ jobs:
           submodules: 'recursive'
       - name: Cache emsdk
         uses: actions/cache@v1
-        id: 'cache-emsdk'
+        id: 'emsdk'
         with:
           path: 'emsdk-cache'
           key: ${{ runner.os }}-emsdk-1.39.11
@@ -24,9 +24,9 @@ jobs:
           actions-cache-folder: 'emsdk-cache'
       - name: Cache emsdk build artifacts
         uses: actions/cache@v1
-        id: 'cache-emsdk-artifacts'
+        id: 'emsdk-build-artifacts'
         with:
           path: '~/.emscripten_cache'
-          key: ${{ runner.os }}-emsdk-1.39.11-artifacts
+          key: ${{ runner.os }}-emsdk-build-artifacts-1.39.11
       - name: build
         run: python3 make.py -build
