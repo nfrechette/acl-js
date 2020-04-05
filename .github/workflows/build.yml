@@ -1,0 +1,26 @@
+name: build
+
+on: [push, pull_request]
+
+jobs:
+  ubuntu:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v2
+        with:
+          submodules: 'recursive'
+      - name: Cache emsdk
+        uses: actions/cache@v1
+        id: 'cache-emsdk'
+        with:
+          path: 'emsdk-cache'
+          key: ${{ runner.os }}-emsdk-1.39.11
+      - name: Setup emsdk
+        uses: mymindstorm/setup-emsdk@v4
+        with:
+          version: 1.39.11
+          no-cache: true
+          actions-cache-folder: 'emsdk-cache'
+      - name: build
+        run: python3 make.py -build -clean
