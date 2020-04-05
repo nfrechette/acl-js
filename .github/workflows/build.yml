@@ -22,5 +22,11 @@ jobs:
           version: 1.39.11
           no-cache: true
           actions-cache-folder: 'emsdk-cache'
+      - name: Cache emsdk build artifacts
+        uses: actions/cache@v1
+        id: 'cache-emsdk-artifacts'
+        with:
+          path: '~/.emscripten_cache'
+          key: ${{ runner.os }}-emsdk-1.39.11-artifacts
       - name: build
-        run: python3 make.py -build -clean
+        run: python3 make.py -build
