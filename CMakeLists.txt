@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.2)
+project(acl-js NONE)
 
 if(CMAKE_CONFIGURATION_TYPES)
 	set(CMAKE_CONFIGURATION_TYPES Debug Release)
