@@ -1,0 +1,9 @@
+# Temporary data rules
+bin/
+build/
+**/__pycache__/
+.vscode/
+
+# Test data rules
+test_data/*.zip
+test_data/test_data*
