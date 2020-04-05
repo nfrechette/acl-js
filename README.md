@@ -4,7 +4,7 @@
 
 # Animation Compression Library JavaScript Module
 
-This module uses [Animation Compression Library](https://github.com/nfrechette/acl) compiled through `emscripten` into WebAssembly. This allows fast decompression of animations compressed with ACL.
+This module uses [Animation Compression Library](https://github.com/nfrechette/acl) compiled through `emscripten 1.39.11` into WebAssembly. This allows fast decompression of animations compressed with ACL.
 
 ## Getting started
 
