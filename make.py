@@ -280,6 +280,7 @@ if __name__ == "__main__":
 	os.chdir(build_dir)
 
 	print('Using config: {}'.format(args.config))
+	print('Using {} threads'.format(args.num_threads))
 
 	# Make sure 'make' runs with all available cores
 	os.environ['MAKEFLAGS'] = '-j{}'.format(args.num_threads)
