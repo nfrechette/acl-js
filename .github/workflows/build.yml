@@ -31,4 +31,4 @@ jobs:
       - name: Build
         run: python3 make.py -build
       - name: Unit tests
-        run: python3 make.py -unit_tests
+        run: python3 make.py -unit_test
