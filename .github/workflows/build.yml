@@ -28,5 +28,7 @@ jobs:
         with:
           path: '~/.emscripten_cache'
           key: ${{ runner.os }}-emsdk-build-artifacts-1.39.11
-      - name: build
+      - name: Build
         run: python3 make.py -build
+      - name: Unit tests
+        run: python3 make.py -unit_tests
