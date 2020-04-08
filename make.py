@@ -18,6 +18,7 @@ def parse_argv():
 	actions = parser.add_argument_group(title='Actions', description='If no action is specified, the solution/make files are generated. Multiple actions can be used simultaneously.')
 	actions.add_argument('-build', action='store_true')
 	actions.add_argument('-clean', action='store_true')
+	actions.add_argument('-unit_test', action='store_true')
 	actions.add_argument('-regression_test', action='store_true')
 
 	target = parser.add_argument_group(title='Target')
@@ -25,6 +26,7 @@ def parse_argv():
 
 	misc = parser.add_argument_group(title='Miscellaneous')
 	misc.add_argument('-num_threads', help='Number of threads to use while compiling and regression testing')
+	misc.add_argument('-tests_matching', help='Only run tests whose names match this regex')
 	misc.add_argument('-help', action='help', help='Display this usage information')
 
 	num_threads = multiprocessing.cpu_count()
@@ -33,7 +35,7 @@ def parse_argv():
 	if not num_threads or num_threads == 0:
 		num_threads = 4
 
-	parser.set_defaults(build=False, clean=False, regression_test=False, config='Release', num_threads=num_threads)
+	parser.set_defaults(build=False, clean=False, unit_test=False, regression_test=False, config='Release', num_threads=num_threads, tests_matching='')
 
 	args = parser.parse_args()
 
@@ -63,6 +65,20 @@ def do_build(args):
 	result = subprocess.call(cmake_cmd, shell=True)
 	if result != 0:
 		print('Build failed!')
+		sys.exit(result)
+
+def do_tests(args):
+	print('Running unit tests ...')
+	ctest_cmd = 'ctest --output-on-failure --parallel {}'.format(args.num_threads)
+
+	if platform.system() == 'Darwin':
+		ctest_cmd += ' -C {}'.format(args.config)
+
+	if args.tests_matching:
+		ctest_cmd += ' --tests-regex {}'.format(args.tests_matching)
+
+	result = subprocess.call(ctest_cmd, shell=True)
+	if result != 0:
 		sys.exit(result)
 
 def do_prepare_regression_test_data(test_data_dir, args):
@@ -274,6 +290,9 @@ if __name__ == "__main__":
 
 	if args.build:
 		do_build(args)
+
+	if args.unit_test:
+		do_tests(args)
 
 	if args.regression_test:
 		do_regression_tests(install_dir, test_data_dir, args)
