@@ -14,7 +14,9 @@ Using **Python 3**, run [make.py](../make.py) with the `-regression_test` comman
 
 ## Test configurations
 
-All clips are tested with default compression settings.
+The [configs](./configs) directory contains a number of test configuration files. Each file specifies the compression settings to use and the corresponding expected error threshold. A reference configuration file can be found [here](./reference.config.sjson).
+
+All clips are tested against every test configuration.
 
 ## Debugging a test failure
 

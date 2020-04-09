@@ -119,6 +119,45 @@ def do_prepare_regression_test_data(test_data_dir, args):
 
 	print('Found {} regression clips'.format(len(regression_clips)))
 
+	# Grab all the test configurations
+	test_configs = []
+	test_config_dir = os.path.join(test_data_dir, 'configs')
+	if os.path.exists(test_config_dir):
+		for (dirpath, dirnames, filenames) in os.walk(test_config_dir):
+			for filename in filenames:
+				if not filename.endswith('.config.sjson'):
+					continue
+
+				config_filename = os.path.join(dirpath, filename)
+				test_configs.append((config_filename, filename))
+
+	if len(test_configs) == 0:
+		print('No regression configurations found')
+		sys.exit(1)
+
+	print('Found {} regression configurations'.format(len(test_configs)))
+
+	# Sort the configs by name for consistency
+	test_configs.sort(key=lambda entry: entry[1])
+
+	# Sort clips by size to test larger clips first, it parallelizes better
+	regression_clips.sort(key=lambda entry: entry[1], reverse=True)
+
+	# Write our metadata file
+	with open(os.path.join(current_test_data_dir, 'metadata.sjson'), 'w') as metadata_file:
+		print('configs = [', file = metadata_file)
+		for config_filename, _ in test_configs:
+			print('\t"{}"'.format(os.path.relpath(config_filename, test_config_dir)), file = metadata_file)
+		print(']', file = metadata_file)
+		print('', file = metadata_file)
+		print('clips = [', file = metadata_file)
+		for clip_filename, _ in regression_clips:
+			print('\t"{}"'.format(os.path.relpath(clip_filename, current_test_data_dir)), file = metadata_file)
+		print(']', file = metadata_file)
+		print('', file = metadata_file)
+
+	return current_test_data_dir
+
 def format_elapsed_time(elapsed_time):
 	hours, rem = divmod(elapsed_time, 3600)
 	minutes, seconds = divmod(rem, 60)
@@ -164,7 +203,7 @@ def do_regression_tests(install_dir, test_data_dir, args):
 	print('Running regression tests ...')
 
 	# Validate that our regression testing tool is present
-	regression_tester = os.path.join(install_dir, 'tools', 'regression-tester.js')
+	regression_tester = os.path.join(install_dir, 'tools', 'acl_regression_tester.js')
 	regression_tester = os.path.abspath(regression_tester)
 
 	if not os.path.exists(regression_tester):
@@ -182,85 +221,104 @@ def do_regression_tests(install_dir, test_data_dir, args):
 			clip_filename = os.path.join(dirpath, filename)
 			regression_clips.append((clip_filename, os.path.getsize(clip_filename)))
 
+	# Grab all the test configurations
+	test_configs = []
+	test_config_dir = os.path.join(test_data_dir, 'configs')
+	if os.path.exists(test_config_dir):
+		for (dirpath, dirnames, filenames) in os.walk(test_config_dir):
+			for filename in filenames:
+				if not filename.endswith('.config.sjson'):
+					continue
+
+				config_filename = os.path.join(dirpath, filename)
+				test_configs.append((config_filename, filename))
+
+	# Sort the configs by name for consistency
+	test_configs.sort(key=lambda entry: entry[1])
+
 	# Sort clips by size to test larger clips first, it parallelizes better
 	regression_clips.sort(key=lambda entry: entry[1], reverse=True)
 
-	# Iterate over every clip and perform the regression testing
-	regression_start_time = time.perf_counter()
+	# Iterate over every clip and configuration and perform the regression testing
+	for config_filename, _ in test_configs:
+		print('Performing regression tests for configuration: {}'.format(os.path.basename(config_filename)))
+		regression_start_time = time.perf_counter()
 
-	cmd_queue = queue.Queue()
-	completed_queue = queue.Queue()
-	failed_queue = queue.Queue()
+		cmd_queue = queue.Queue()
+		completed_queue = queue.Queue()
+		failed_queue = queue.Queue()
+		regression_testing_failed = False
 
-	for clip_filename, _ in regression_clips:
-		cmd = 'node "{}" "{}"'.format(regression_tester, clip_filename)
-		cmd_queue.put((clip_filename, cmd))
+		for clip_filename, _ in regression_clips:
+			cmd = 'node "{}" -acl="{}" -test -config="{}"'.format(regression_tester, clip_filename, config_filename)
+			if platform.system() == 'Windows':
+				cmd = cmd.replace('/', '\\')
 
-	# Add a marker to terminate the threads
-	for i in range(args.num_threads):
-		cmd_queue.put(None)
+			cmd_queue.put((clip_filename, cmd))
 
-	def run_clip_regression_test(cmd_queue, completed_queue, failed_queue):
-		while True:
-			entry = cmd_queue.get()
-			if not entry:
-				return
+		# Add a marker to terminate the threads
+		for i in range(args.num_threads):
+			cmd_queue.put(None)
 
-			(clip_filename, cmd) = entry
+		def run_clip_regression_test(cmd_queue, completed_queue, failed_queue):
+			while True:
+				entry = cmd_queue.get()
+				if entry is None:
+					return
 
-			try:
-				subprocess.check_output(cmd, shell=True)
-			except subprocess.CalledProcessError as e:
-				failed_queue.put((clip_filename, cmd, e))
+				(clip_filename, cmd) = entry
 
-			completed_queue.put(clip_filename)
+				result = subprocess.call(cmd, shell=True)
+				try:
+					subprocess.check_output(cmd, shell=True)
+				except subprocess.CalledProcessError as e:
+					regression_testing_failed = True
+					failed_queue.put((clip_filename, cmd, e))
 
-	threads = [ threading.Thread(target = run_clip_regression_test, args = (cmd_queue, completed_queue, failed_queue)) for _i in range(args.num_threads) ]
-	for thread in threads:
-		thread.daemon = True
-		thread.start()
+				completed_queue.put(clip_filename)
 
-	print_progress(0, len(regression_clips), 'Testing clips:', '{} / {}'.format(0, len(regression_clips)))
-	try:
-		# Run until we are done
-		while True:
-			for thread in threads:
-				thread.join(1.0)
+		threads = [ threading.Thread(target = run_clip_regression_test, args = (cmd_queue, completed_queue, failed_queue)) for _i in range(args.num_threads) ]
+		for thread in threads:
+			thread.daemon = True
+			thread.start()
 
-			num_processed = completed_queue.qsize()
-			print_progress(num_processed, len(regression_clips), 'Testing clips:', '{} / {}'.format(num_processed, len(regression_clips)))
+		print_progress(0, len(regression_clips), 'Testing clips:', '{} / {}'.format(0, len(regression_clips)))
+		try:
+			while True:
+				for thread in threads:
+					thread.join(1.0)
 
-			all_threads_done = True
-			for thread in threads:
-				if thread.isAlive():
-					all_threads_done = False
+				num_processed = completed_queue.qsize()
+				print_progress(num_processed, len(regression_clips), 'Testing clips:', '{} / {}'.format(num_processed, len(regression_clips)))
 
-			if all_threads_done:
-				break
+				all_threads_done = True
+				for thread in threads:
+					if thread.isAlive():
+						all_threads_done = False
 
-		# Done, append a dummy error
-		failed_queue.put(None)
+				if all_threads_done:
+					break
 
-		# Print out any errors we might have hit
-		while True:
-			entry = failed_queue.get()
-			if not entry:
-				break
+			# Done, append a dummy error
+			failed_queue.put(None)
 
-			(clip_filename, cmd, e) = entry
-			print('Failed to run regression test for clip: {}'.format(clip_filename))
-			print(cmd)
+			# Print out any errors we might have hit
+			while True:
+				entry = failed_queue.get()
+				if not entry:
+					break
 
-	except KeyboardInterrupt:
-		sys.exit(1)
+				(clip_filename, cmd, e) = entry
+				print('Failed to run regression test for clip: {}'.format(clip_filename))
+				print(cmd)
+		except KeyboardInterrupt:
+			sys.exit(1)
 
-	regression_testing_failed = not failed_queue.empty()
+		regression_end_time = time.perf_counter()
+		print('Done in {}'.format(format_elapsed_time(regression_end_time - regression_start_time)))
 
-	regression_end_time = time.perf_counter()
-	print('Done in {}'.format(format_elapsed_time(regression_end_time - regression_start_time)))
-
-	if regression_testing_failed:
-		sys.exit(1)
+		if regression_testing_failed:
+			sys.exit(1)
 
 if __name__ == "__main__":
 	args = parse_argv()
