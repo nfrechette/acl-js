@@ -1,0 +1,21 @@
+{
+  "name": "acl-encoder",
+  "productName": "Animation Compression Library JavaScript Encoder",
+  "version": "0.0.1",
+  "description": "Compress animated time series using the Animation Compression Library.",
+  "browser": "main.js",
+  "scripts": {
+  },
+  "keywords": [
+    "acl",
+    "animation",
+    "compression",
+    "3d"
+  ],
+  "author": "Nicholas Frechette <zeno490@gmail.com> (https://nfrechette.github.io/)",
+  "license": "MIT",
+  "dependencies": {
+  },
+  "devDependencies": {
+  }
+}
