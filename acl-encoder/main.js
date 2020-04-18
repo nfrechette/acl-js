@@ -32,3 +32,6 @@ export { SampleTypes, isSampleType } from './src/sample_types.js'
 export { Track } from './src/track.js'
 export { TrackArray } from './src/track_array.js'
 export { ScalarTrackDescription, TransformTrackDescription } from './src/track_desc.js'
+
+export { compress } from './src/compress.js'
+

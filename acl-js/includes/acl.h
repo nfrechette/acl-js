@@ -1,3 +1,5 @@
+#pragma once
+
 ////////////////////////////////////////////////////////////////////////////////
 // The MIT License (MIT)
 //
@@ -22,12 +24,18 @@
 // SOFTWARE.
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <acl/algorithm/uniformly_sampled/encoder.h>
-#include <acl/algorithm/uniformly_sampled/decoder.h>
+#include <emscripten.h>
+#include <cstddef>
 
-#include <stdio.h>
+#if defined(__cplusplus)
+extern "C"
+{
+#endif
 
-int main() {
-	printf("hello, world!\n");
-	return 0;
+EMSCRIPTEN_KEEPALIVE
+unsigned char* compress(const unsigned char* metadata, size_t metadata_size,
+	const unsigned char* raw_data, size_t raw_data_size);
+
+#if defined(__cplusplus)
 }
+#endif
