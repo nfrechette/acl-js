@@ -3,9 +3,11 @@
 from __future__ import print_function
 
 import argparse
+import codecs
 import multiprocessing
 import os
 import platform
+import re
 import shutil
 import subprocess
 import sys
@@ -58,7 +60,7 @@ def do_generate_solution(install_dir, args):
 		print('Failed to generate solution files!')
 		sys.exit(result)
 
-def do_build(args):
+def do_build(install_dir, encoder_dir, args):
 	print('Building ...')
 	cmake_cmd = 'cmake --build .'
 	if platform.system() == 'Darwin':
@@ -70,6 +72,28 @@ def do_build(args):
 	if result != 0:
 		print('Build failed!')
 		sys.exit(result)
+
+	emcc_version = subprocess.check_output('emcc --version | head -n 1', shell=True)
+	emcc_version = emcc_version.decode(sys.stdin.encoding)
+	emcc_version = emcc_version.strip()
+
+	# Now that the WASM modules have been built, patch our JS files
+	encoder_wasm = os.path.join(install_dir, 'acl-js.wasm')
+	encoder_wasm_data = None
+	with open(encoder_wasm, 'rb') as f:
+		encoder_wasm_data = f.read()
+		(encoder_wasm_data, _) = codecs.getencoder('hex')(encoder_wasm_data)
+		encoder_wasm_data = encoder_wasm_data.decode('utf-8')
+
+	encoder_js = os.path.join(encoder_dir, 'src', 'compress.wasm.js')
+	encoder_js_data = None
+	with open(encoder_js, 'r') as f:
+		encoder_js_data = f.read()
+		encoder_js_data = re.sub(r'^([ \t]*// Compiled with )emcc .*$', r'\1{}'.format(emcc_version), encoder_js_data, flags = re.MULTILINE)
+		encoder_js_data = re.sub(r'^([ \t]*export const wasmBinaryBlob =) "[a-fA-F0-9]*"$', r'\1 "{}"'.format(encoder_wasm_data), encoder_js_data, flags = re.MULTILINE)
+
+	with open(encoder_js, 'w') as f:
+		f.write(encoder_js_data)
 
 def do_tests(args):
 	print('Running unit tests ...')
@@ -325,6 +349,7 @@ if __name__ == "__main__":
 
 	build_dir = os.path.join(os.getcwd(), 'build')
 	install_dir = os.path.join(os.getcwd(), 'bin')
+	encoder_dir = os.path.join(os.getcwd(), 'acl-encoder')
 	test_data_dir = os.path.join(os.getcwd(), 'test_data')
 
 	if args.clean:
@@ -352,7 +377,7 @@ if __name__ == "__main__":
 	do_generate_solution(install_dir, args)
 
 	if args.build:
-		do_build(args)
+		do_build(install_dir, encoder_dir, args)
 
 	if args.unit_test:
 		do_tests(args)
