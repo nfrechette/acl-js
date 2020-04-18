@@ -57,8 +57,8 @@ export class Track {
         identity = QVV.identity
         this._desc = new TransformTrackDescription()
         break
-      case SampleTypes.Float32:
         numFloatsPerSample = 1
+      case SampleTypes.Float:
         identity = 0.0
         this._desc = new ScalarTrackDescription()
         break
@@ -79,7 +79,7 @@ export class Track {
         case SampleTypes.QVV:
           this._samples[i].setQVV(identity)
           break
-        case SampleTypes.Float32:
+        case SampleTypes.Float:
           this._samples[i].setFloat(identity)
           break
       }
@@ -103,7 +103,7 @@ export class Track {
   get sampleSize() {
     switch (this.sampleType) {
       case SampleTypes.QVV:       return (4 + 3 + 3) * 4
-      case SampleTypes.Float32:   return 4
+      case SampleTypes.Float:     return 4
       default:                    throw new TypeError('Unknown sample type')
     }
   }

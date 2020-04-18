@@ -153,7 +153,7 @@ export class TrackArray {
         const scale = Vec3.lerp(qvv0.scale, qvv1.scale, interpolationData.interpolationAlpha)
         value = new QVV(rotation, translation, scale)
         break
-      case SampleTypes.Float32:
+      case SampleTypes.Float:
         const float0 = sample0.getFloat()
         const float1 = sample1.getFloat()
         const alpha0 = 1.0 - interpolationData.interpolationAlpha

@@ -23,8 +23,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 export const SampleTypes = {
-  QVV: 'qvv',
-  Float32: 'float32'
+  QVV: 'qvv',     // 0
+  Float: 'float'  // 1
 }
 
 export function isSampleType(sampleType) {
@@ -32,7 +32,7 @@ export function isSampleType(sampleType) {
 
   switch (sampleType) {
     case SampleTypes.QVV:
-    case SampleTypes.Float32:
+    case SampleTypes.Float:
       return true
     default:
       return false
