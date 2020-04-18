@@ -22,16 +22,15 @@
 // SOFTWARE.
 ////////////////////////////////////////////////////////////////////////////////
 
-export { Quat } from './src/quat.js'
-export { QVV } from './src/qvv.js'
-export { Vec3 } from './src/vec3.js'
+export { Quat } from './src-js/quat.js'
+export { QVV } from './src-js/qvv.js'
+export { Vec3 } from './src-js/vec3.js'
 
-export { RoundingPolicy, isRoundingPolicy } from './src/rounding_policy.js'
-export { Sample } from './src/sample.js'
-export { SampleTypes, isSampleType } from './src/sample_types.js'
-export { Track } from './src/track.js'
-export { TrackArray } from './src/track_array.js'
-export { ScalarTrackDescription, TransformTrackDescription } from './src/track_desc.js'
+export { RoundingPolicy, isRoundingPolicy } from './src-js/rounding_policy.js'
+export { Sample } from './src-js/sample.js'
+export { SampleTypes, isSampleType } from './src-js/sample_types.js'
+export { Track } from './src-js/track.js'
+export { TrackArray } from './src-js/track_array.js'
+export { ScalarTrackDescription, TransformTrackDescription } from './src-js/track_desc.js'
 
-export { compress } from './src/compress.js'
-
+export { compress } from './src-js/compress.js'

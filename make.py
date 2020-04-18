@@ -60,7 +60,7 @@ def do_generate_solution(install_dir, args):
 		print('Failed to generate solution files!')
 		sys.exit(result)
 
-def do_build(install_dir, encoder_dir, args):
+def do_build(install_dir, js_dir, args):
 	print('Building ...')
 	cmake_cmd = 'cmake --build .'
 	if platform.system() == 'Darwin':
@@ -85,7 +85,7 @@ def do_build(install_dir, encoder_dir, args):
 		(encoder_wasm_data, _) = codecs.getencoder('hex')(encoder_wasm_data)
 		encoder_wasm_data = encoder_wasm_data.decode('utf-8')
 
-	encoder_js = os.path.join(encoder_dir, 'src', 'compress.wasm.js')
+	encoder_js = os.path.join(js_dir, 'src-js', 'compress.wasm.js')
 	encoder_js_data = None
 	with open(encoder_js, 'r') as f:
 		encoder_js_data = f.read()
@@ -349,7 +349,7 @@ if __name__ == "__main__":
 
 	build_dir = os.path.join(os.getcwd(), 'build')
 	install_dir = os.path.join(os.getcwd(), 'bin')
-	encoder_dir = os.path.join(os.getcwd(), 'acl-encoder')
+	js_dir = os.path.join(os.getcwd(), 'acl-js')
 	test_data_dir = os.path.join(os.getcwd(), 'test_data')
 
 	if args.clean:
@@ -377,7 +377,7 @@ if __name__ == "__main__":
 	do_generate_solution(install_dir, args)
 
 	if args.build:
-		do_build(install_dir, encoder_dir, args)
+		do_build(install_dir, js_dir, args)
 
 	if args.unit_test:
 		do_tests(args)
