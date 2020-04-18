@@ -38,3 +38,25 @@ export function isSampleType(sampleType) {
       return false
   }
 }
+
+export function sampleTypeToMetadata(sampleType) {
+  switch (sampleType) {
+    case SampleTypes.QVV:
+      return 0
+    case SampleTypes.Float:
+      return 1
+    default:
+      return -1
+  }
+}
+
+export function getNumFloatsPerSample(sampleType) {
+  switch (sampleType) {
+    case SampleTypes.QVV:
+      return (4 + 3 + 3)
+    case SampleTypes.Float:
+      return 1
+    default:
+      throw new TypeError('Unknown sample type')
+  }
+}

@@ -26,26 +26,26 @@ import { SampleTypes, isSampleType } from './sample_types.js'
 import { QVV } from './qvv.js'
 
 export class Sample {
-  constructor(type, rawData, startIndex) {
+  constructor(type, rawData, rawDataOffset) {
     if (!isSampleType(type)) {
       throw new TypeError("'type' must be a SampleType")
     }
 
-    if (!rawData || !(rawData instanceof Float32Array)) {
-      throw new TypeError("'rawData' must be a Float32Array")
+    if (!rawData || !(rawData instanceof Float64Array)) {
+      throw new TypeError("'rawData' must be a Float64Array")
     }
 
-    if (!Number.isInteger(startIndex)) {
-      throw new TypeError("'startIndex' must be an integer")
+    if (!Number.isInteger(rawDataOffset)) {
+      throw new TypeError("'rawDataOffset' must be an integer")
     }
 
-    if (startIndex < 0 || startIndex > rawData.length) {
-      throw new RangeError(`Invalid start index: ${startIndex}`)
+    if (rawDataOffset < 0 || rawDataOffset > rawData.length) {
+      throw new RangeError(`Invalid raw data offset: ${rawDataOffset}`)
     }
 
     this._type = type
     this._rawData = rawData
-    this._startIndex = startIndex
+    this._rawDataOffset = rawDataOffset
   }
 
   get type() {
@@ -57,17 +57,17 @@ export class Sample {
       throw new TypeError('Sample is not a QVV')
     }
 
-    const startIndex = this._startIndex
-    qvv.rotation.x = this._rawData[startIndex + 0]
-    qvv.rotation.y = this._rawData[startIndex + 1]
-    qvv.rotation.z = this._rawData[startIndex + 2]
-    qvv.rotation.w = this._rawData[startIndex + 3]
-    qvv.translation.x = this._rawData[startIndex + 4]
-    qvv.translation.y = this._rawData[startIndex + 5]
-    qvv.translation.z = this._rawData[startIndex + 6]
-    qvv.scale.x = this._rawData[startIndex + 7]
-    qvv.scale.y = this._rawData[startIndex + 8]
-    qvv.scale.z = this._rawData[startIndex + 9]
+    const rawDataOffset = this._rawDataOffset
+    qvv.rotation.x = this._rawData[rawDataOffset + 0]
+    qvv.rotation.y = this._rawData[rawDataOffset + 1]
+    qvv.rotation.z = this._rawData[rawDataOffset + 2]
+    qvv.rotation.w = this._rawData[rawDataOffset + 3]
+    qvv.translation.x = this._rawData[rawDataOffset + 4]
+    qvv.translation.y = this._rawData[rawDataOffset + 5]
+    qvv.translation.z = this._rawData[rawDataOffset + 6]
+    qvv.scale.x = this._rawData[rawDataOffset + 7]
+    qvv.scale.y = this._rawData[rawDataOffset + 8]
+    qvv.scale.z = this._rawData[rawDataOffset + 9]
 
     return qvv
   }
@@ -77,17 +77,17 @@ export class Sample {
       throw new TypeError('Sample is not a QVV')
     }
 
-    const startIndex = this._startIndex
-    this._rawData[startIndex + 0] = qvv.rotation.x
-    this._rawData[startIndex + 1] = qvv.rotation.y
-    this._rawData[startIndex + 2] = qvv.rotation.z
-    this._rawData[startIndex + 3] = qvv.rotation.w
-    this._rawData[startIndex + 4] = qvv.translation.x
-    this._rawData[startIndex + 5] = qvv.translation.y
-    this._rawData[startIndex + 6] = qvv.translation.z
-    this._rawData[startIndex + 7] = qvv.scale.x
-    this._rawData[startIndex + 8] = qvv.scale.y
-    this._rawData[startIndex + 9] = qvv.scale.z
+    const rawDataOffset = this._rawDataOffset
+    this._rawData[rawDataOffset + 0] = qvv.rotation.x
+    this._rawData[rawDataOffset + 1] = qvv.rotation.y
+    this._rawData[rawDataOffset + 2] = qvv.rotation.z
+    this._rawData[rawDataOffset + 3] = qvv.rotation.w
+    this._rawData[rawDataOffset + 4] = qvv.translation.x
+    this._rawData[rawDataOffset + 5] = qvv.translation.y
+    this._rawData[rawDataOffset + 6] = qvv.translation.z
+    this._rawData[rawDataOffset + 7] = qvv.scale.x
+    this._rawData[rawDataOffset + 8] = qvv.scale.y
+    this._rawData[rawDataOffset + 9] = qvv.scale.z
   }
 
   getFloat() {
@@ -95,7 +95,7 @@ export class Sample {
       throw new TypeError('Sample is not a Float')
     }
 
-    return this._rawData[this._startIndex]
+    return this._rawData[this._rawDataOffset]
   }
 
   setFloat(flt) {
@@ -103,7 +103,7 @@ export class Sample {
       throw new TypeError('Sample is not a Float')
     }
 
-    this._rawData[this._startIndex] = flt
+    this._rawData[this._rawDataOffset] = flt
   }
 
   isValid() {
