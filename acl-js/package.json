@@ -1,9 +1,9 @@
 {
-  "name": "acl-encoder",
-  "productName": "Animation Compression Library JavaScript Encoder",
+  "name": "acl",
+  "productName": "Animation Compression Library JavaScript Bindings",
   "version": "0.0.1",
   "description": "Compress animated time series using the Animation Compression Library.",
-  "browser": "main.js",
+  "browser": "acl.js",
   "scripts": {
   },
   "keywords": [
