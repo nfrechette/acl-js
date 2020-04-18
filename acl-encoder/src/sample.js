@@ -91,7 +91,7 @@ export class Sample {
   }
 
   getFloat() {
-    if (this._type !== SampleTypes.Float32) {
+    if (this._type !== SampleTypes.Float) {
       throw new TypeError('Sample is not a Float')
     }
 
@@ -99,7 +99,7 @@ export class Sample {
   }
 
   setFloat(flt) {
-    if (this._type !== SampleTypes.Float32) {
+    if (this._type !== SampleTypes.Float) {
       throw new TypeError('Sample is not a Float')
     }
 
@@ -111,7 +111,7 @@ export class Sample {
       case SampleTypes.QVV:
         const qvv = this.getQVV(QVV.identity)
         return qvv.isValid()
-      case SampleTypes.Float32:
+      case SampleTypes.Float:
         const flt = this.getFloat()
         return Number.isFinite(flt)
       default:
