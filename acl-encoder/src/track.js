@@ -23,12 +23,25 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 import { QVV } from './qvv.js'
-import { SampleTypes, isSampleType } from './sample_types.js'
+import { SampleTypes, isSampleType, getNumFloatsPerSample } from './sample_types.js'
 import { Sample } from './sample.js'
 import { ScalarTrackDescription, TransformTrackDescription } from './track_desc.js'
 
 export class Track {
-  constructor(sampleType, numSamples, sampleRate) {
+  static getMetadataSize(sampleType) {
+    // Ignore sample type, num samples, sample rate since they are identical for all tracks
+    // within a track array
+    switch (sampleType) {
+      case SampleTypes.QVV:
+        return TransformTrackDescription.getMetadataSize()
+      case SampleTypes.Float:
+        return ScalarTrackDescription.getMetadataSize()
+      default:
+        throw new TypeError('Unknown sample type')
+    }
+  }
+
+  constructor(sampleType, numSamples, sampleRate, rawData, rawDataOffset, metadata, metadataOffset) {
     if (!isSampleType(sampleType)) {
       throw new TypeError("'type' must be a SampleType")
     }
@@ -45,35 +58,59 @@ export class Track {
       throw new RangeError(`Invalid sample rate: ${sampleRate}`)
     }
 
+    if (!rawData || !(rawData instanceof Float64Array)) {
+      throw new TypeError("'rawData' must be a Float64Array")
+    }
+
+    if (!Number.isInteger(rawDataOffset)) {
+      throw new TypeError("'rawDataOffset' must be an integer")
+    }
+
+    if (rawDataOffset < 0 || rawDataOffset >= rawData.length) {
+      throw new RangeError(`Invalid raw data offset: ${rawDataOffset}`)
+    }
+
+    if (!metadata || !(metadata instanceof Float64Array)) {
+      throw new TypeError("'metadata' must be a Float64Array")
+    }
+
+    if (!Number.isInteger(metadataOffset)) {
+      throw new TypeError("'metadataOffset' must be an integer")
+    }
+
+    if (metadataOffset < 0 || metadataOffset >= metadata.length) {
+      throw new RangeError(`Invalid metadata offset: ${metadataOffset}`)
+    }
+
     this._sampleType = sampleType
     this._numSamples = numSamples
     this._sampleRate = sampleRate
 
-    let numFloatsPerSample = 0
+    const numFloatsPerSample = getNumFloatsPerSample(sampleType)
     let identity = null
     switch (sampleType) {
       case SampleTypes.QVV:
-        numFloatsPerSample = (4 + 3 + 3)
         identity = QVV.identity
-        this._desc = new TransformTrackDescription()
+        this._desc = new TransformTrackDescription(metadata, metadataOffset)
         break
-        numFloatsPerSample = 1
       case SampleTypes.Float:
         identity = 0.0
-        this._desc = new ScalarTrackDescription()
+        this._desc = new ScalarTrackDescription(metadata, metadataOffset)
         break
       default:
         throw new TypeError('Unknown sample type')
     }
 
-    const rawData = new Float32Array(numFloatsPerSample * numSamples)
     this._rawData = rawData
+    this._rawDataOffset = rawDataOffset
+    this._metadata = metadata
+    this._metadataOffset = metadataOffset
     this._samples = new Array(numSamples)
 
     // Allocate and initialize our samples to the identity
-    let floatIndex = 0
+    let sampleRawDataOffset = rawDataOffset
     for (let i = 0; i < numSamples; ++i) {
-      this._samples[i] = new Sample(sampleType, rawData, floatIndex)
+      this._samples[i] = new Sample(sampleType, rawData, sampleRawDataOffset)
 
       switch (sampleType) {
         case SampleTypes.QVV:
@@ -84,7 +121,7 @@ export class Track {
           break
       }
 
-      floatIndex += numFloatsPerSample
+      sampleRawDataOffset += numFloatsPerSample
     }
   }
 

@@ -22,7 +22,7 @@
 // SOFTWARE.
 ////////////////////////////////////////////////////////////////////////////////
 
-import { isSampleType, SampleTypes } from './sample_types.js'
+import { SampleTypes, isSampleType, sampleTypeToMetadata, getNumFloatsPerSample } from './sample_types.js'
 import { isRoundingPolicy } from './rounding_policy.js'
 import { Track } from './track.js'
 import { QVV } from './qvv.js'
@@ -31,6 +31,10 @@ import { Vec3 } from './vec3.js'
 import { findLinearInterpolationSamplesWithSampleRate } from './util.js'
 
 export class TrackArray {
+  static getMetadataSize(numTracks, sampleType, numSamplesPerTrack) {
+    return Track.getMetadataSize(sampleType) * numTracks + 4
+  }
+
   constructor(numTracks, sampleType, numSamplesPerTrack, sampleRate) {
     if (!Number.isInteger(numTracks)) {
       throw new TypeError("'numTracks' must be an integer")
@@ -62,11 +66,36 @@ export class TrackArray {
     this._sampleRate = sampleRate
     this._tracks = new Array(numTracks)
 
+    const numFloatsPerSample = getNumFloatsPerSample(sampleType)
+
+    // When we call into WASM, we can only use int/float/double and arrays
+    // To simplify things, all our data is packed into two float64 arrays
+    // One for the raw data of every track and one for the metadata
+
+    const metadataSize = TrackArray.getMetadataSize(numTracks, sampleType, numSamplesPerTrack)
+    const trackMetadataSize = Track.getMetadataSize(sampleType)
+    const metadata = new Float64Array(metadataSize)
+    this._metadata = metadata
+
+    const rawData = new Float64Array(numFloatsPerSample * numSamplesPerTrack * numTracks)
+    this._rawData = rawData
+
     // Allocate and initialize our tracks
+    let rawDataOffset = 0
+    let metadataOffset = 4
     for (let trackIndex = 0; trackIndex < numTracks; ++trackIndex) {
-      this._tracks[trackIndex] = new Track(sampleType, numSamplesPerTrack, sampleRate)
+      this._tracks[trackIndex] = new Track(sampleType, numSamplesPerTrack, sampleRate, rawData, rawDataOffset, metadata, metadataOffset)
       this._tracks[trackIndex].description.outputIndex = trackIndex
+
+      rawDataOffset += numFloatsPerSample * numSamplesPerTrack
+      metadataOffset += trackMetadataSize
     }
+
+    // Setup our metadata
+    metadata[0] = numTracks
+    metadata[1] = sampleTypeToMetadata(sampleType)
+    metadata[2] = numSamplesPerTrack
+    metadata[3] = sampleRate
   }
 
   get numTracks() {

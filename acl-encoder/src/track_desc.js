@@ -23,23 +23,66 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 export class ScalarTrackDescription {
-  constructor() {
+  static getMetadataSize() {
+    return 3
+  }
+
+  constructor(metadata, metadataOffset) {
+    if (!Number.isInteger(metadataOffset)) {
+      throw new TypeError("'metadataOffset' must be an integer")
+    }
+
+    if (metadataOffset < 0 || metadataOffset + 3 > metadata.length) {
+      throw new RangeError(`Invalid metadata offset: ${metadataOffset}`)
+    }
+
+    this._metadata = metadata
+    this._metadataOffset = metadataOffset
+
+    // Use setters
     this.outputIndex = 0
 
     this.precision = 0.0
     this.constantThreshold = 0.0
   }
 
+  get outputIndex() {
+    return this._outputIndex
+  }
+
+  set outputIndex(value) {
+    this._outputIndex = value
+    this._metadata[this._metadataOffset + 0] = value
+  }
+
+  get precision() {
+    return this._precision
+  }
+
+  set precision(value) {
+    this._precision = value
+    this._metadata[this._metadataOffset + 1] = value
+  }
+
+  get constantThreshold() {
+    return this._constantThreshold
+  }
+
+  set constantThreshold(value) {
+    this._constantThreshold = value
+    this._metadata[this._metadataOffset + 2] = value
+  }
+
   isValid() {
-    if (!Number.isInteger(this.outputIndex) || this.outputIndex < 0 || this.outputIndex >= 65535) {
+    if (!Number.isInteger(this._outputIndex) || this._outputIndex < 0 || this._outputIndex >= 65535) {
       return false
     }
 
-    if (!Number.isFinite(this.precision) || this.precision < 0.0 || this.precision >= 100.0) {
+    if (!Number.isFinite(this._precision) || this._precision < 0.0 || this._precision >= 100.0) {
       return false
     }
 
-    if (!Number.isFinite(this.constantThreshold) || this.constantThreshold < 0.0 || this.constantThreshold >= 100.0) {
+    if (!Number.isFinite(this._constantThreshold) || this._constantThreshold < 0.0 || this._constantThreshold >= 100.0) {
       return false
     }
 
@@ -48,7 +91,23 @@ export class ScalarTrackDescription {
 }
 
 export class TransformTrackDescription {
-  constructor() {
+  static getMetadataSize() {
+    return 7
+  }
+
+  constructor(metadata, metadataOffset) {
+    if (!Number.isInteger(metadataOffset)) {
+      throw new TypeError("'metadataOffset' must be an integer")
+    }
+
+    if (metadataOffset < 0 || metadataOffset + 7 > metadata.length) {
+      throw new RangeError(`Invalid metadata offset: ${metadataOffset}`)
+    }
+
+    this._metadata = metadata
+    this._metadataOffset = metadataOffset
+
+    // Use setters
     this.outputIndex = 0
     this.parentIndex = -1
 
@@ -59,32 +118,95 @@ export class TransformTrackDescription {
     this.constantScaleThreshold = 0.00001
   }
 
+  get outputIndex() {
+    return this._outputIndex
+  }
+
+  set outputIndex(value) {
+    this._outputIndex = value
+    this._metadata[this._metadataOffset + 0] = value
+  }
+
+  get parentIndex() {
+    return this._parentIndex
+  }
+
+  set parentIndex(value) {
+    this._parentIndex = value
+    this._metadata[this._metadataOffset + 1] = value
+  }
+
+  get precision() {
+    return this._precision
+  }
+
+  set precision(value) {
+    this._precision = value
+    this._metadata[this._metadataOffset + 2] = value
+  }
+
+  get shellDistance() {
+    return this._shellDistance
+  }
+
+  set shellDistance(value) {
+    this._shellDistance = value
+    this._metadata[this._metadataOffset + 3] = value
+  }
+
+  get constantRotationThreshold() {
+    return this._constantRotationThreshold
+  }
+
+  set constantRotationThreshold(value) {
+    this._constantRotationThreshold = value
+    this._metadata[this._metadataOffset + 4] = value
+  }
+
+  get constantTranslatonThreshold() {
+    return this._constantTranslatonThreshold
+  }
+
+  set constantTranslatonThreshold(value) {
+    this._constantTranslatonThreshold = value
+    this._metadata[this._metadataOffset + 5] = value
+  }
+
+  get constantScaleThreshold() {
+    return this._constantScaleThreshold
+  }
+
+  set constantScaleThreshold(value) {
+    this._constantScaleThreshold = value
+    this._metadata[this._metadataOffset + 6] = value
+  }
+
   isValid() {
-    if (!Number.isInteger(this.outputIndex) || this.outputIndex < 0 || this.outputIndex >= 65535) {
+    if (!Number.isInteger(this._outputIndex) || this._outputIndex < 0 || this._outputIndex >= 65535) {
       return false
     }
 
-    if (!Number.isInteger(this.outputIndex) || this.parentIndex < -1 || this.parentIndex >= 65535) {
+    if (!Number.isInteger(this._outputIndex) || this._parentIndex < -1 || this._parentIndex >= 65535) {
       return false
     }
 
-    if (!Number.isFinite(this.precision) || this.precision < 0.0 || this.precision >= 100.0) {
+    if (!Number.isFinite(this._precision) || this._precision < 0.0 || this._precision >= 100.0) {
       return false
     }
 
-    if (!Number.isFinite(this.shellDistance) || this.shellDistance < 0.0 || this.shellDistance >= 10000.0) {
+    if (!Number.isFinite(this._shellDistance) || this._shellDistance < 0.0 || this._shellDistance >= 10000.0) {
       return false
     }
 
-    if (!Number.isFinite(this.constantRotationThreshold) || this.constantRotationThreshold < 0.0 || this.constantRotationThreshold >= 100.0) {
+    if (!Number.isFinite(this._constantRotationThreshold) || this._constantRotationThreshold < 0.0 || this._constantRotationThreshold >= 100.0) {
       return false
     }
 
-    if (!Number.isFinite(this.constantTranslatonThreshold) || this.constantTranslatonThreshold < 0.0 || this.constantTranslatonThreshold >= 100.0) {
+    if (!Number.isFinite(this._constantTranslatonThreshold) || this._constantTranslatonThreshold < 0.0 || this._constantTranslatonThreshold >= 100.0) {
       return false
     }
 
-    if (!Number.isFinite(this.constantScaleThreshold) || this.constantScaleThreshold < 0.0 || this.constantScaleThreshold >= 100.0) {
+    if (!Number.isFinite(this._constantScaleThreshold) || this._constantScaleThreshold < 0.0 || this._constantScaleThreshold >= 100.0) {
       return false
     }
 
