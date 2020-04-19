@@ -10,7 +10,7 @@ endif()
 enable_testing()
 
 # Add our projects
-add_subdirectory(acl-js)
+add_subdirectory(acl-js/src-encoder-cpp)
 add_subdirectory(tests/acl_unit_tests)
 add_subdirectory(tests/rtm_unit_tests)
 add_subdirectory(tools/acl_regression_tester)

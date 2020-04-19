@@ -78,7 +78,7 @@ def do_build(install_dir, js_dir, args):
 	emcc_version = emcc_version.strip()
 
 	# Now that the WASM modules have been built, patch our JS files
-	encoder_wasm = os.path.join(install_dir, 'acl-js.wasm')
+	encoder_wasm = os.path.join(install_dir, 'acl-encoder.wasm')
 	encoder_wasm_data = None
 	with open(encoder_wasm, 'rb') as f:
 		encoder_wasm_data = f.read()
