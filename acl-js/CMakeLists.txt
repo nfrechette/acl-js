@@ -12,8 +12,8 @@ include_directories("${PROJECT_SOURCE_DIR}/../external/acl/external/rtm/includes
 
 # Grab all of our source files
 file(GLOB_RECURSE ALL_MAIN_SOURCE_FILES LIST_DIRECTORIES false
-	${PROJECT_SOURCE_DIR}/src-cpp/*.cpp
-	${PROJECT_SOURCE_DIR}/src-cpp/*.h)
+	${PROJECT_SOURCE_DIR}/src-encoder-cpp/*.cpp
+	${PROJECT_SOURCE_DIR}/src-encoder-cpp/*.h)
 
 add_executable(${PROJECT_NAME} ${ALL_MAIN_SOURCE_FILES})
 
