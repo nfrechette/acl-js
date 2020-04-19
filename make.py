@@ -89,8 +89,8 @@ def do_build(install_dir, js_dir, args):
 	encoder_js_data = None
 	with open(encoder_js, 'r') as f:
 		encoder_js_data = f.read()
-		encoder_js_data = re.sub(r'^([ \t]*// Compiled with )emcc .*$', r'\1{}'.format(emcc_version), encoder_js_data, flags = re.MULTILINE)
-		encoder_js_data = re.sub(r'^([ \t]*export const wasmBinaryBlob =) "[a-fA-F0-9]*"$', r'\1 "{}"'.format(encoder_wasm_data), encoder_js_data, flags = re.MULTILINE)
+		encoder_js_data = re.sub(r'^([ \t]*// Compiled with ).*$', r'\1{}'.format(emcc_version), encoder_js_data, flags = re.MULTILINE)
+		encoder_js_data = re.sub(r'^([ \t]*export const wasmBinaryBlob =) "[<>_\w\d]*"$', r'\1 "{}"'.format(encoder_wasm_data), encoder_js_data, flags = re.MULTILINE)
 
 	with open(encoder_js, 'w') as f:
 		f.write(encoder_js_data)
