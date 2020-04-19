@@ -22,7 +22,7 @@
 // SOFTWARE.
 ////////////////////////////////////////////////////////////////////////////////
 
-#include "acl.h"
+#include "encoder.h"
 
 #include <acl/compression/animation_clip.h>
 #include <acl/compression/skeleton.h>
