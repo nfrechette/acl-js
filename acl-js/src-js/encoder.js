@@ -22,7 +22,7 @@
 // SOFTWARE.
 ////////////////////////////////////////////////////////////////////////////////
 
-import { wasmBinaryBlob } from './compress.wasm.js'
+import { wasmBinaryBlob } from './encoder.wasm.js'
 import { TrackArray } from "./track_array";
 
 let wasmModule = null
