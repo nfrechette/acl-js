@@ -85,7 +85,7 @@ def do_build(install_dir, js_dir, args):
 		(encoder_wasm_data, _) = codecs.getencoder('hex')(encoder_wasm_data)
 		encoder_wasm_data = encoder_wasm_data.decode('utf-8')
 
-	encoder_js = os.path.join(js_dir, 'src-js', 'compress.wasm.js')
+	encoder_js = os.path.join(js_dir, 'src-js', 'encoder.wasm.js')
 	encoder_js_data = None
 	with open(encoder_js, 'r') as f:
 		encoder_js_data = f.read()
