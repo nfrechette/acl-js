@@ -1,19 +1,18 @@
 cmake_minimum_required (VERSION 3.2)
-project(acl-js CXX)
+project(acl-encoder CXX)
 
 set(CMAKE_CXX_STANDARD 11)
 
 # Generate a standalone WASM file without a JS runtime
 set(CMAKE_EXECUTABLE_SUFFIX .wasm)
 
-include_directories("${PROJECT_SOURCE_DIR}/includes")
-include_directories("${PROJECT_SOURCE_DIR}/../external/acl/includes")
-include_directories("${PROJECT_SOURCE_DIR}/../external/acl/external/rtm/includes")
+include_directories("${PROJECT_SOURCE_DIR}/../../external/acl/includes")
+include_directories("${PROJECT_SOURCE_DIR}/../../external/acl/external/rtm/includes")
 
 # Grab all of our source files
 file(GLOB_RECURSE ALL_MAIN_SOURCE_FILES LIST_DIRECTORIES false
-	${PROJECT_SOURCE_DIR}/src-encoder-cpp/*.cpp
-	${PROJECT_SOURCE_DIR}/src-encoder-cpp/*.h)
+	${PROJECT_SOURCE_DIR}/*.cpp
+	${PROJECT_SOURCE_DIR}/*.h)
 
 add_executable(${PROJECT_NAME} ${ALL_MAIN_SOURCE_FILES})
 
