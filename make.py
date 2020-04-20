@@ -95,6 +95,23 @@ def do_build(install_dir, js_dir, args):
 	with open(encoder_js, 'w') as f:
 		f.write(encoder_js_data)
 
+	decoder_wasm = os.path.join(install_dir, 'acl-decoder.wasm')
+	decoder_wasm_data = None
+	with open(decoder_wasm, 'rb') as f:
+		decoder_wasm_data = f.read()
+		(decoder_wasm_data, _) = codecs.getencoder('hex')(decoder_wasm_data)
+		decoder_wasm_data = decoder_wasm_data.decode('utf-8')
+
+	decoder_js = os.path.join(js_dir, 'src-js', 'decoder.wasm.js')
+	decoder_js_data = None
+	with open(decoder_js, 'r') as f:
+		decoder_js_data = f.read()
+		decoder_js_data = re.sub(r'^([ \t]*// Compiled with ).*$', r'\1{}'.format(emcc_version), decoder_js_data, flags = re.MULTILINE)
+		decoder_js_data = re.sub(r'^([ \t]*export const wasmBinaryBlob =) "[<>_\w\d]*"$', r'\1 "{}"'.format(decoder_wasm_data), decoder_js_data, flags = re.MULTILINE)
+
+	with open(decoder_js, 'w') as f:
+		f.write(decoder_js_data)
+
 def do_tests(args):
 	print('Running unit tests ...')
 	ctest_cmd = 'ctest --output-on-failure --parallel {}'.format(args.num_threads)
