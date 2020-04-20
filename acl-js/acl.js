@@ -34,3 +34,4 @@ export { TrackArray } from './src-js/track_array.js'
 export { ScalarTrackDescription, TransformTrackDescription } from './src-js/track_desc.js'
 
 export { Encoder } from './src-js/encoder.js'
+export { Decoder } from './src-js/decoder.js'
