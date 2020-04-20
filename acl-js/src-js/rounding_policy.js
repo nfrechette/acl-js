@@ -28,23 +28,23 @@ export const RoundingPolicy = {
   //////////////////////////////////////////////////////////////////////////
   // If the sample time lies between two samples, both sample indices
   // are returned and the interpolation alpha lies in between.
-  None: 'none',
+  None: { key: 'none', value: 0 },
 
   //////////////////////////////////////////////////////////////////////////
   // If the sample time lies between two samples, both sample indices
   // are returned and the interpolation will be 0.0.
-  Floor: 'floor',
+  Floor: { key: 'floor', value: 1 },
 
   //////////////////////////////////////////////////////////////////////////
   // If the sample time lies between two samples, both sample indices
   // are returned and the interpolation will be 1.0.
-  Ceil: 'ceil',
+  Ceil: { key: 'ceil', value: 2 },
 
   //////////////////////////////////////////////////////////////////////////
   // If the sample time lies between two samples, both sample indices
   // are returned and the interpolation will be 0.0 or 1.0 depending
   // on which sample is nearest.
-  Nearest: 'nearest',
+  Nearest: { key: 'nearest', value: 3 },
 }
 
 export function isRoundingPolicy(policy) {
