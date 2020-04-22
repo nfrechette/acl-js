@@ -32,7 +32,11 @@ extern "C"
 {
 #endif
 
+EMSCRIPTEN_KEEPALIVE
+int decompress_tracks(const unsigned char* compressed_clip, size_t compressed_clip_size, float sample_time, int rounding_policy, unsigned char* output_buffer, size_t output_buffer_size);
 
+EMSCRIPTEN_KEEPALIVE
+int decompress_track(const unsigned char* compressed_clip, size_t compressed_clip_size, float sample_time, int rounding_policy, int transform_index, unsigned char* output_buffer, size_t output_buffer_size);
 
 #if defined(__cplusplus)
 }
