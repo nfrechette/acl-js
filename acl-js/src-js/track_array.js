@@ -142,9 +142,12 @@ export class TrackArray {
 
   sampleTracks(sampleTime, roundingPolicy) {
     const result = new Array(this._numTracks)
+
     for (let trackIndex = 0; trackIndex < this._numTracks; ++trackIndex) {
       result[trackIndex] = this.sampleTrack(trackIndex, sampleTime, roundingPolicy)
     }
+
+    return result
   }
 
   sampleTrack(trackIndex, sampleTime, roundingPolicy) {
