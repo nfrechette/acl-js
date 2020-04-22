@@ -94,10 +94,10 @@ static acl::AnimationClip build_clip(const qvv_track_description* track_descript
 			const rtm::quatd rotation = rtm::quat_normalize(rtm::quat_load(raw_data + sample_raw_data_offset + 0));
 			bone.rotation_track.set_sample(sample_index, rotation);
 
-			const rtm::vector4d translation = rtm::vector_load(raw_data + sample_raw_data_offset + 4);
+			const rtm::vector4d translation = rtm::vector_load3(raw_data + sample_raw_data_offset + 4);
 			bone.translation_track.set_sample(sample_index, translation);
 
-			const rtm::vector4d scale = rtm::vector_load(raw_data + sample_raw_data_offset + 7);
+			const rtm::vector4d scale = rtm::vector_load3(raw_data + sample_raw_data_offset + 7);
 			bone.scale_track.set_sample(sample_index, scale);
 		}
 	}
