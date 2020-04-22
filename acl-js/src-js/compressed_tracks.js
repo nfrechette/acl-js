@@ -37,6 +37,24 @@ export class CompressedTracks {
     else {
       throw new TypeError("'buffer' must be an ArrayBuffer or Uint8Array")
     }
+
+    // CompressedClip is 16 bytes, ClipHeader is 20 bytes + offsets
+    const compressedTracksHeaderSize = 4 + 5
+    const compressedTracksHeader = new Uint32Array(this._binaryBlob.buffer, 0, compressedTracksHeaderSize)
+
+    this.version = compressedTracksHeader[3] & 0xFFFF
+    this.numTracks = compressedTracksHeader[4] & 0xFFFF
+    this.numSegments = compressedTracksHeader[4] >> 16
+    this.hasScale = compressedTracksHeader[5] >> 24
+    this.numSamplesPerTrack = compressedTracksHeader[7]
+    //this.sampleRate = compressedTracksHeader[8]
+
+    // Only support QVV tracks for now, 12 floats each
+    this.outputBufferSize = this.numTracks * 12 * 4
+  }
+
+  get byteLength() {
+    return this._binaryBlob.byteLength
   }
 
   get array() {
