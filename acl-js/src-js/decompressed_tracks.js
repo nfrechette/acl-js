@@ -22,17 +22,28 @@
 // SOFTWARE.
 ////////////////////////////////////////////////////////////////////////////////
 
-export { Quat } from './src-js/quat.js'
-export { QVV } from './src-js/qvv.js'
-export { Vec3 } from './src-js/vec3.js'
+export class DecompressedTracks {
+  constructor() {
+    this._buffer = null
+    this._arrayU8 = null
+    this._array = null
+  }
 
-export { RoundingPolicy, isRoundingPolicy } from './src-js/rounding_policy.js'
-export { Sample } from './src-js/sample.js'
-export { SampleTypes, isSampleType } from './src-js/sample_types.js'
-export { Track } from './src-js/track.js'
-export { TrackArray } from './src-js/track_array.js'
-export { ScalarTrackDescription, TransformTrackDescription } from './src-js/track_desc.js'
-export { Encoder } from './src-js/encoder.js'
+  resize(byteLength) {
+    this._buffer = new ArrayBuffer(byteLength)
+    this._arrayU8 = new Uint8Array(this._buffer)
+    this._array = new Float32Array(this._buffer)
+  }
 
-export { DecompressedTracks } from './src-js/decompressed_tracks.js'
-export { Decoder } from './src-js/decoder.js'
+  get byteLength() {
+    return this._buffer ? this._buffer.byteLength : 0
+  }
+
+  get array() {
+    return this._array
+  }
+
+  get buffer() {
+    return this._buffer
+  }
+}
