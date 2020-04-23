@@ -153,13 +153,37 @@ export class Decoder {
       throw new TypeError("'roundingPolicy' must be a RoundingPolicy")
     }
 
+    let resultBufferU8 = null
+    let resultBufferOffset = 0
+    const qvvOutputBufferSize = 12 * 4
+
     if (decompressedTracks) {
-      if (!(decompressedTracks instanceof DecompressedTracks)) {
-        throw new TypeError("'decompressedTracks' must be null or a DecompressedTracks instance")
+      if (decompressedTracks instanceof DecompressedTracks) {
+        // Make sure we can store our result
+        const outputBufferSize = compressedTracks.outputBufferSize
+        if (decompressedTracks.byteLength < outputBufferSize) {
+          decompressedTracks.resize(outputBufferSize)
+        }
+
+        resultBufferU8 = decompressedTracks._arrayU8
+        resultBufferOffset = trackIndex * 12 * 4
+      }
+      else if (decompressedTracks instanceof Uint8Array) {
+        resultBufferU8 = decompressedTracks
+      }
+      else if (decompressedTracks instanceof Float32Array) {
+        resultBufferU8 = new Uint8Array(decompressedTracks.buffer)
+      }
+      else {
+        throw new TypeError("'decompressedTracks' must be one of a DecompressedTracks, Uint8Array, or Float32Array instance")
+      }
+
+      if (resultBufferOffset + qvvOutputBufferSize > resultBufferU8.byteLength) {
+        throw new Error(`'decompressedTracks' must be at least ${qvvOutputBufferSize} bytes`)
       }
     }
     else {
-      decompressedTracks = new DecompressedTracks()
+      throw new Error("Must provide a 'decompressedTracks' output value")
     }
 
     const compressedTracksSize = compressedTracks.array.byteLength
@@ -169,14 +193,7 @@ export class Decoder {
     //console.log(`Writing compressed tracks to WASM heap offset ${compressedTracksBuffer}, ${compressedTracksSize} bytes`)
     wasmHeap.set(compressedTracks.array, compressedTracksBuffer)
 
-    const outputBufferSize = compressedTracks.outputBufferSize
-    const qvvOutputBufferSize = 12 * 4
     const outputBuffer = wasmInstance.exports.sbrk(qvvOutputBufferSize)
-
-    // Make sure we can store our result
-    if (decompressedTracks.byteLength < outputBufferSize) {
-      decompressedTracks.resize(outputBufferSize)
-    }
 
     const result = wasmInstance.exports.decompress_track(compressedTracksBuffer, compressedTracksSize, sampleTime, roundingPolicy.value, trackIndex, outputBuffer, qvvOutputBufferSize)
     //console.log(`Decompression result: ${result}`)
@@ -186,7 +203,7 @@ export class Decoder {
 
     // Copy our decompressed tracks out of the WASM heap
     //console.log(`Reading decompressed tracks from WASM heap offset ${outputBuffer}, ${outputBufferSize} bytes`)
-    decompressedTracks._arrayU8.set(wasmHeap.subarray(outputBuffer, outputBuffer + qvvOutputBufferSize), trackIndex * 12 * 4)
+    resultBufferU8.set(wasmHeap.subarray(outputBuffer, outputBuffer + qvvOutputBufferSize), resultBufferOffset)
 
     // Reset our heap
     wasmInstance.exports.sbrk(compressedTracksBuffer - wasmInstance.exports.sbrk(0))
