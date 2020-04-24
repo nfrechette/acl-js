@@ -22,6 +22,8 @@
 // SOFTWARE.
 ////////////////////////////////////////////////////////////////////////////////
 
+import { Decoder } from './decoder.js'
+
 export class CompressedTracks {
   constructor(buffer) {
     if (!buffer) {
@@ -29,10 +31,10 @@ export class CompressedTracks {
     }
 
     if (buffer instanceof ArrayBuffer) {
-      this._binaryBlob = new Uint8Array(buffer)
+      this._array = new Uint8Array(buffer)
     }
     else if (buffer instanceof Uint8Array) {
-      this._binaryBlob = buffer
+      this._array = buffer
     }
     else {
       throw new TypeError("'buffer' must be an ArrayBuffer or Uint8Array")
@@ -40,7 +42,10 @@ export class CompressedTracks {
 
     // CompressedClip is 16 bytes, ClipHeader is 20 bytes + offsets
     const compressedTracksHeaderSize = 4 + 5
-    const compressedTracksHeader = new Uint32Array(this._binaryBlob.buffer, 0, compressedTracksHeaderSize)
+    const compressedTracksHeader = new Uint32Array(this._array.buffer, 0, compressedTracksHeaderSize)
+
+    this._decoder = null
+    this._mem = null
 
     this.version = compressedTracksHeader[3] & 0xFFFF
     this.numTracks = compressedTracksHeader[4] & 0xFFFF
@@ -54,14 +59,42 @@ export class CompressedTracks {
   }
 
   get byteLength() {
-    return this._binaryBlob.byteLength
+    return this._array ? this._array.byteLength : this._mem.byteLength
   }
 
   get array() {
-    return this._binaryBlob
+    return this._array ? this._array : this._mem.array
   }
 
-  get buffer() {
-    return this._binaryBlob.buffer
+  get isBound() {
+    return !!this._decoder
+  }
+
+  bind(decoder) {
+    if (!decoder || !(decoder instanceof Decoder)) {
+      throw new TypeError("'decoder' must be a Decoder instance")
+    }
+
+    if (this._decoder) {
+      throw new Error('Already bound to a decoder')
+    }
+
+    // Allocate space on the WASM heap and copy our content over
+    const mem = decoder.malloc(this.byteLength)
+    mem.array.set(this._array)
+
+    this._mem = mem
+    this._array = null
+    this._decoder = decoder
+  }
+
+  dispose() {
+    if (this._mem) {
+      this._decoder.queueFree(this._mem)
+    }
+
+    this._mem = null
+    this._array = null
+    this._decoder = null
   }
 }
