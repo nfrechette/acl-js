@@ -32,7 +32,7 @@
 int decompress_tracks(const unsigned char* compressed_clip, size_t compressed_clip_size, float sample_time, int rounding_policy, unsigned char* output_buffer, size_t output_buffer_size)
 {
 	const acl::CompressedClip* compressed_clip_ = reinterpret_cast<const acl::CompressedClip*>(compressed_clip);
-	if (!compressed_clip_ || compressed_clip_->get_size() != compressed_clip_size)
+	if (!compressed_clip_ || compressed_clip_size < compressed_clip_->get_size())
 		return -1;	// Invalid compressed clip buffer
 
 	if (compressed_clip_->is_valid(false).any())
@@ -62,7 +62,7 @@ int decompress_tracks(const unsigned char* compressed_clip, size_t compressed_cl
 int decompress_track(const unsigned char* compressed_clip, size_t compressed_clip_size, float sample_time, int rounding_policy, int transform_index, unsigned char* output_buffer, size_t output_buffer_size)
 {
 	const acl::CompressedClip* compressed_clip_ = reinterpret_cast<const acl::CompressedClip*>(compressed_clip);
-	if (!compressed_clip_ || compressed_clip_->get_size() != compressed_clip_size)
+	if (!compressed_clip_ || compressed_clip_size < compressed_clip_->get_size())
 		return -1;	// Invalid compressed clip buffer
 
 	if (compressed_clip_->is_valid(false).any())
