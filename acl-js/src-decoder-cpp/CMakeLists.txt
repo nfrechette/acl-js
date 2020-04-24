@@ -23,6 +23,8 @@ target_compile_options(${PROJECT_NAME} PRIVATE -Werror)			# Treat warnings as er
 target_compile_options(${PROJECT_NAME} PRIVATE -fno-rtti)		# Disable RTTI
 target_compile_options(${PROJECT_NAME} PRIVATE -fno-exceptions)	# Disable exceptions
 
+target_link_libraries(${PROJECT_NAME} "-s ALLOW_MEMORY_GROWTH=1")	# Allow dynamic memory allocation
+
 # Export a few functions from the emscripten runtime
 target_link_libraries(${PROJECT_NAME} "-s EXPORTED_FUNCTIONS=['__start','_sbrk']")
 
