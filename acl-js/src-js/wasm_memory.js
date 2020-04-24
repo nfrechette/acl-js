@@ -22,58 +22,41 @@
 // SOFTWARE.
 ////////////////////////////////////////////////////////////////////////////////
 
-import { Decoder } from './decoder.js'
-
-export class DecompressedTracks {
-  constructor(decoder) {
-    if (!decoder || !(decoder instanceof Decoder)) {
-      throw new TypeError("'decoder' must be a Decoder instance")
-    }
-
-    this._decoder = decoder
-    this._mem = null
-    this._array = null  // Float32Array
-    this._generation = -1
-  }
-
-  get byteLength() {
-    return this._mem ? this._mem.byteLength : 0
+export class WASMMemory {
+  constructor(wasmState, arrayU8) {
+    this._wasmState = wasmState
+    this._arrayU8 = arrayU8
+    this._byteOffset = arrayU8.byteOffset
+    this._byteLength = arrayU8.byteLength
+    this._heap = wasmState.heap
+    this._isQueuedForFree = false
+    this._generation = 0
   }
 
   get array() {
-    if (!this._mem) {
-      return null
+    if (this._isQueuedForFree) {
+      throw new Error('WASM memory has been freed already')
     }
 
-    if (this._generation !== this._mem.generation) {
-      // Our memory moved, recreate our float array
-      const array = this._mem.array
-      this._array = new Float32Array(array.buffer, array.byteOffset, array.byteLength / 4)
-      this._generation = this._mem.generation
+    if (this._wasmState.heap !== this._heap) {
+      // Heap reallocated, rebind our buffer
+      this._arrayU8 = new Uint8Array(this._wasmState.heap.buffer, this._byteOffset, this._byteLength)
+      this._heap = this._wasmState.heap
+      this._generation++
     }
 
-    return this._array
+    return this._arrayU8
   }
 
-  resize(byteLength) {
-    const byteLengthPadded = (byteLength + 15) & ~15
-    if (byteLengthPadded !== this.byteLength) {
-      if (this._mem) {
-        this._decoder.queueFree(this._mem)
-      }
-
-      this._mem = this._decoder.malloc(byteLengthPadded)
-      this._array = null
-      this._generation = -1
-    }
+  get byteOffset() {
+    return this._byteOffset
   }
 
-  dispose() {
-    if (this._mem) {
-      this._decoder.queueFree(this._mem)
-      this._mem = null
-      this._array = null
-      this._generation = -1
-    }
+  get byteLength() {
+    return this._byteLength
+  }
+
+  get generation() {
+    return this._generation
   }
 }
