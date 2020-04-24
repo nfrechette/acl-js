@@ -111,7 +111,7 @@ export class TransformTrackDescription {
     this.outputIndex = 0
     this.parentIndex = -1
 
-    this.precision = 0.0001 // 0.1cm
+    this.precision = 0.0001 // 0.01cm
     this.shellDistance = 1.0 // 1.0m
     this.constantRotationThreshold = 0.00284714461 // degrees
     this.constantTranslatonThreshold = 0.00001 // 0.001cm
