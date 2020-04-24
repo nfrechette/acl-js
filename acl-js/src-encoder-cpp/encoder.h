@@ -33,8 +33,8 @@ extern "C"
 #endif
 
 EMSCRIPTEN_KEEPALIVE
-unsigned char* compress(const unsigned char* metadata, size_t metadata_size,
-	const unsigned char* raw_data, size_t raw_data_size);
+int compress(const unsigned char* metadata, size_t metadata_size,
+	unsigned char* raw_data, size_t raw_data_size);
 
 #if defined(__cplusplus)
 }
