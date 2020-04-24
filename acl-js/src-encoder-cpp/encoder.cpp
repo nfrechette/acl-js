@@ -32,9 +32,6 @@
 
 #include <cstdint>
 
-// Static because we don't want to destroy it after we return our compressed clip
-static acl::ANSIAllocator allocator;
-
 enum class sample_types
 {
 	unknown = -1,
@@ -56,7 +53,7 @@ struct qvv_track_description
 	double constant_scale_threshold;
 };
 
-static acl::RigidSkeleton build_skeleton(const qvv_track_description* track_descriptions, uint32_t num_transforms)
+static acl::RigidSkeleton build_skeleton(const qvv_track_description* track_descriptions, uint32_t num_transforms, acl::IAllocator& allocator)
 {
 	acl::RigidBone* bones = acl::allocate_type_array<acl::RigidBone>(allocator, num_transforms);
 
@@ -74,7 +71,7 @@ static acl::RigidSkeleton build_skeleton(const qvv_track_description* track_desc
 	return skeleton;
 }
 
-static acl::AnimationClip build_clip(const qvv_track_description* track_descriptions, const double* raw_data, const acl::RigidSkeleton& skeleton, uint32_t num_transforms, uint32_t num_samples_per_track, float sample_rate)
+static acl::AnimationClip build_clip(const qvv_track_description* track_descriptions, const double* raw_data, const acl::RigidSkeleton& skeleton, uint32_t num_transforms, uint32_t num_samples_per_track, float sample_rate, acl::IAllocator& allocator)
 {
 	// Our raw data contains QVVs laid out: rotation0, translation0, scale0, rotation1, ...
 	acl::AnimationClip clip(allocator, skeleton, num_samples_per_track, sample_rate, acl::String());
@@ -105,8 +102,8 @@ static acl::AnimationClip build_clip(const qvv_track_description* track_descript
 	return clip;
 }
 
-unsigned char* compress(const unsigned char* metadata, size_t metadata_size,
-	const unsigned char* raw_data, size_t raw_data_size)
+int compress(const unsigned char* metadata, size_t metadata_size,
+	unsigned char* raw_data, size_t raw_data_size)
 {
 	const double* metadata_ = reinterpret_cast<const double*>(metadata);
 
@@ -116,21 +113,23 @@ unsigned char* compress(const unsigned char* metadata, size_t metadata_size,
 	const float sample_rate = static_cast<float>(metadata_[3]);
 
 	if (sample_type != sample_types::qvvd)
-		return reinterpret_cast<unsigned char*>(0);	// Only QVV is supported for now
+		return 0;	// Only QVV is supported for now
 
 	const size_t expected_metadata_size = sizeof(double) * 4 + sizeof(qvv_track_description) * num_tracks;
 	if (expected_metadata_size != metadata_size)
-		return reinterpret_cast<unsigned char*>(1);	// Invalid metadata size
+		return -1;	// Invalid metadata size
 
 	const size_t expected_raw_data_size = sizeof(double) * 10 * num_samples_per_track * num_tracks;
-	if (expected_raw_data_size != raw_data_size)
-		return reinterpret_cast<unsigned char*>(2);	// Invalid raw data size
+	if (raw_data_size < expected_raw_data_size)
+		return -2;	// Invalid raw data size
 
 	const double* raw_data_ = reinterpret_cast<const double*>(raw_data);
 	const qvv_track_description* track_descriptions = reinterpret_cast<const qvv_track_description*>(metadata_ + 4);
 
-	const acl::RigidSkeleton skeleton = build_skeleton(track_descriptions, num_tracks);
-	const acl::AnimationClip clip = build_clip(track_descriptions, raw_data_, skeleton, num_tracks, num_samples_per_track, sample_rate);
+	acl::ANSIAllocator allocator;
+
+	const acl::RigidSkeleton skeleton = build_skeleton(track_descriptions, num_tracks, allocator);
+	const acl::AnimationClip clip = build_clip(track_descriptions, raw_data_, skeleton, num_tracks, num_samples_per_track, sample_rate, allocator);
 
 	acl::qvvf_transform_error_metric error_metric;
 
@@ -147,8 +146,19 @@ unsigned char* compress(const unsigned char* metadata, size_t metadata_size,
 	acl::OutputStats stats;
 	const acl::ErrorResult result = acl::uniformly_sampled::compress_clip(allocator, clip, settings, compressed_clip, stats);
 	if (result.any())
-		return reinterpret_cast<unsigned char*>(3);	// Compression failed
+		return -3;	// Compression failed
 
-	// Buffer will be freed from JS
-	return reinterpret_cast<unsigned char*>(compressed_clip);
+	const uint32_t compressed_size = compressed_clip->get_size();
+	if (raw_data_size < compressed_size)
+	{
+		allocator.deallocate(compressed_clip, compressed_size);
+		return -4;	// Raw dara buffer is too small
+	}
+
+	// Copy our compressed clip back into the raw data buffer, it is no longer needed
+	// and it should be large enough.
+	std::memcpy((void*)raw_data, compressed_clip, compressed_size);
+
+	allocator.deallocate(compressed_clip, compressed_size);
+	return compressed_size;
 }

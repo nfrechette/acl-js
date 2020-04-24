@@ -35,6 +35,7 @@ const importObject = {
   env: {
     emscripten_notify_memory_growth: function(index) {
       wasmHeap = new Uint8Array(wasmInstance.exports.memory.buffer)
+      //console.log(`Encoder WASM heap resized to ${wasmHeap.byteLength} bytes`)
     }
   }
 }
@@ -59,6 +60,13 @@ export class Encoder {
           // Run static initializers
           wasmInstance.exports._start()
           importObject.env.emscripten_notify_memory_growth(0)
+
+          // Make sure our segment head is aligned to 16 bytes
+          const segmentHead = wasmInstance.exports.sbrk(0)
+          const alignmentOverhead = segmentHead & 0x15
+          if (alignmentOverhead != 0) {
+            wasmInstance.exports.sbrk(16 - alignmentOverhead)
+          }
         })
     }
   }
@@ -82,28 +90,29 @@ export class Encoder {
     //console.log(`Writing metadata to WASM heap offset ${metadataBuffer}, ${metadataBufferSize} bytes`)
     wasmHeap.set(new Uint8Array(tracks._metadata.buffer), metadataBuffer)
 
-    const rawDataBufferSize = tracks._rawData.byteLength
+    // Add a bit of padding to account for our header, etc
+    // We'll use the raw data buffer for our output as well
+    const rawDataBufferSize = tracks._rawData.byteLength + (64 * 1024)
     const rawDataBuffer = wasmInstance.exports.sbrk(rawDataBufferSize)
 
     //console.log(`Writing raw data to WASM heap offset ${rawDataBuffer}, ${rawDataBufferSize} bytes`)
     wasmHeap.set(new Uint8Array(tracks._rawData.buffer), rawDataBuffer)
 
-    // Result is a buffer with the compressed clip or the compressed clip
-    const result = wasmInstance.exports.compress(metadataBuffer, metadataBufferSize, rawDataBuffer, rawDataBufferSize)
+    // Our compressed data will overwrite our raw data with the new size returned
+    const compressedTracksSize = wasmInstance.exports.compress(metadataBuffer, metadataBufferSize, rawDataBuffer, rawDataBufferSize)
+    //console.log(`Compression result: ${compressedTracksSize}`)
 
     let compressedTracks = null
-    if (result < metadataBuffer) {
-      // An error occured
-      throw new Error(`Failed to compress: ${result}`)
+    if (compressedTracksSize <= 0) {
+      // Reset our heap
+      wasmInstance.exports.sbrk(metadataBuffer - wasmInstance.exports.sbrk(0))
+
+      throw new Error(`Failed to compress: ${compressedTracksSize}`)
     }
     else {
-      const compressedTracksHeaderSize = 4
-      const compressedTracksHeader = new Uint32Array(wasmHeap.buffer, result, compressedTracksHeaderSize)
-      const compressedTracksSize = compressedTracksHeader[0]
-
       //console.log(`Reading compressed clip from WASM heap offset ${result}, ${compressedTracksSize} bytes`)
       compressedTracks = new Uint8Array(compressedTracksSize)
-      compressedTracks.set(wasmHeap.subarray(result, result + compressedTracksSize))
+      compressedTracks.set(wasmHeap.subarray(rawDataBuffer, rawDataBuffer + compressedTracksSize))
 
       compressedTracks = new CompressedTracks(compressedTracks)
     }
