@@ -24,7 +24,7 @@
 
 export class ScalarTrackDescription {
   static getMetadataSize() {
-    return 3
+    return 2
   }
 
   constructor(metadata, metadataOffset) {
@@ -32,7 +32,7 @@ export class ScalarTrackDescription {
       throw new TypeError("'metadataOffset' must be an integer")
     }
 
-    if (metadataOffset < 0 || metadataOffset + 3 > metadata.length) {
+    if (metadataOffset < 0 || metadataOffset + 2 > metadata.length) {
       throw new RangeError(`Invalid metadata offset: ${metadataOffset}`)
     }
 
@@ -43,7 +43,6 @@ export class ScalarTrackDescription {
     this.outputIndex = 0
 
     this.precision = 0.0
-    this.constantThreshold = 0.0
   }
 
   get outputIndex() {
@@ -64,25 +63,12 @@ export class ScalarTrackDescription {
     this._metadata[this._metadataOffset + 1] = value
   }
 
-  get constantThreshold() {
-    return this._constantThreshold
-  }
-
-  set constantThreshold(value) {
-    this._constantThreshold = value
-    this._metadata[this._metadataOffset + 2] = value
-  }
-
   isValid() {
     if (!Number.isInteger(this._outputIndex) || this._outputIndex < 0 || this._outputIndex >= 65535) {
       return false
     }
 
     if (!Number.isFinite(this._precision) || this._precision < 0.0 || this._precision >= 100.0) {
-      return false
-    }
-
-    if (!Number.isFinite(this._constantThreshold) || this._constantThreshold < 0.0 || this._constantThreshold >= 100.0) {
       return false
     }
 
