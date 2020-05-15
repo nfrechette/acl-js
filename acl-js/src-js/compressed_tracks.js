@@ -23,6 +23,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 import { Decoder } from './decoder.js'
+import { SampleTypes } from './sample_types.js'
 
 export class CompressedTracks {
   constructor(buffer) {
@@ -40,22 +41,49 @@ export class CompressedTracks {
       throw new TypeError("'buffer' must be an ArrayBuffer or Uint8Array")
     }
 
-    // CompressedClip is 16 bytes, ClipHeader is 20 bytes + offsets
-    const compressedTracksHeaderSize = 4 + 5
-    const compressedTracksHeader = new Uint32Array(this._array.buffer, 0, compressedTracksHeaderSize)
+    // uint32 buffer_size
+    // uint32 hash
+    // uint32 tag
+    const bufferHeader = new Uint32Array(this._array.buffer, 0, 3)
+
+    if (bufferHeader[2] == 0xac10ac10) {
+      // CompressedClip is 16 bytes, ClipHeader is 20 bytes + offsets
+      const compressedClipHeaderSize = 4 + 5
+      const compressedClipHeader = new Uint32Array(this._array.buffer, 0, compressedClipHeaderSize)
+
+      this.version = compressedClipHeader[3] & 0xFFFF
+      this.numTracks = compressedClipHeader[4] & 0xFFFF
+      this.numSegments = compressedClipHeader[4] >> 16
+      this.hasScale = compressedClipHeader[5] >> 24
+      this.numSamplesPerTrack = compressedClipHeader[7]
+      //this.sampleRate = compressedClipHeader[8]
+
+      // QVV is 12 floats each
+      this.outputBufferSize = this.numTracks * 12 * 4
+      this.sampleSize = 12 * 4
+      this.sampleType = SampleTypes.QVV
+    }
+    else if (bufferHeader[2] == 0xac11ac11) {
+      // compressed_tracks is 8 bytes for raw buffer header, and 24 bytes for the tracks header
+      const compressedTracksHeaderSize = 2 + 6
+      const compressedTracksHeader = new Uint32Array(this._array.buffer, 0, compressedTracksHeaderSize)
+
+      this.version = compressedTracksHeader[3] & 0xFFFF
+      this.numTracks = compressedTracksHeader[4]
+      this.numSamplesPerTrack = compressedTracksHeader[5]
+      //this.sampleRate = compressedTracksHeader[6]
+
+      // 1 float per track
+      this.outputBufferSize = this.numTracks * 4
+      this.sampleSize = 4
+      this.sampleType = SampleTypes.Float
+    }
+    else {
+      throw new Error('Unrecognized compressed buffer')
+    }
 
     this._decoder = null
     this._mem = null
-
-    this.version = compressedTracksHeader[3] & 0xFFFF
-    this.numTracks = compressedTracksHeader[4] & 0xFFFF
-    this.numSegments = compressedTracksHeader[4] >> 16
-    this.hasScale = compressedTracksHeader[5] >> 24
-    this.numSamplesPerTrack = compressedTracksHeader[7]
-    //this.sampleRate = compressedTracksHeader[8]
-
-    // Only support QVV tracks for now, 12 floats each
-    this.outputBufferSize = this.numTracks * 12 * 4
   }
 
   get byteLength() {

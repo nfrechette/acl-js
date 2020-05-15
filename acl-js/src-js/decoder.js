@@ -252,8 +252,8 @@ export class Decoder {
 
     let resultBufferU8 = null
     let resultBufferOffset = 0
-    const qvvOutputBufferSize = 12 * 4
-    const outputBuffer = wasmState.instance.exports.sbrk(qvvOutputBufferSize)
+    const sampleSize = compressedTracks.sampleSize
+    const outputBuffer = wasmState.instance.exports.sbrk(sampleSize)
 
     if (decompressedTracks) {
       if (decompressedTracks instanceof DecompressedTracks) {
@@ -264,7 +264,7 @@ export class Decoder {
         }
 
         resultBufferU8 = decompressedTracks._mem.array
-        resultBufferOffset = trackIndex * 12 * 4
+        resultBufferOffset = /*decompressedTracks._mem.byteOffset + */trackIndex * sampleSize
       }
       else if (decompressedTracks instanceof Uint8Array) {
         resultBufferU8 = decompressedTracks
@@ -276,8 +276,8 @@ export class Decoder {
         throw new TypeError("'decompressedTracks' must be one of a DecompressedTracks, Uint8Array, or Float32Array instance")
       }
 
-      if (resultBufferOffset + qvvOutputBufferSize > resultBufferU8.byteLength) {
-        throw new Error(`'decompressedTracks' must be at least ${qvvOutputBufferSize} bytes`)
+      if (resultBufferOffset + sampleSize > resultBufferU8.byteLength) {
+        throw new Error(`'decompressedTracks' must be at least ${sampleSize} bytes`)
       }
     }
     else {
@@ -287,7 +287,7 @@ export class Decoder {
     const compressedTracksSize = compressedTracks._mem.byteLength
     const compressedTracksBuffer = compressedTracks._mem.byteOffset
 
-    const result = wasmState.instance.exports.decompress_track(compressedTracksBuffer, compressedTracksSize, sampleTime, roundingPolicy.value, trackIndex, outputBuffer, qvvOutputBufferSize)
+    const result = wasmState.instance.exports.decompress_track(compressedTracksBuffer, compressedTracksSize, sampleTime, roundingPolicy.value, trackIndex, outputBuffer, sampleSize)
     //console.log(`Decompression result: ${result}`)
     if (result != 0) {
       // Reset our heap
@@ -298,7 +298,7 @@ export class Decoder {
 
     // Copy our decompressed tracks out of the WASM heap
     //console.log(`Reading decompressed tracks from WASM heap offset ${outputBuffer}, ${outputBufferSize} bytes`)
-    resultBufferU8.set(wasmState.heap.subarray(outputBuffer, outputBuffer + qvvOutputBufferSize), resultBufferOffset)
+    resultBufferU8.set(wasmState.heap.subarray(outputBuffer, outputBuffer + sampleSize), resultBufferOffset)
 
     // Reset our heap
     wasmState.instance.exports.sbrk(outputBuffer - wasmState.instance.exports.sbrk(0))

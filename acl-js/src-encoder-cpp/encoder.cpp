@@ -25,6 +25,7 @@
 #include "encoder.h"
 
 #include <acl/compression/animation_clip.h>
+#include <acl/compression/compress.h>
 #include <acl/compression/skeleton.h>
 #include <acl/core/ansi_allocator.h>
 
@@ -51,6 +52,13 @@ struct qvv_track_description
 	double constant_rotation_threshold;
 	double constant_translaton_threshold;
 	double constant_scale_threshold;
+};
+
+struct scalar_track_description
+{
+	double output_index;
+
+	double precision;
 };
 
 static acl::RigidSkeleton build_skeleton(const qvv_track_description* track_descriptions, uint32_t num_transforms, acl::IAllocator& allocator)
@@ -102,18 +110,14 @@ static acl::AnimationClip build_clip(const qvv_track_description* track_descript
 	return clip;
 }
 
-int compress(const unsigned char* metadata, size_t metadata_size,
+static int compress_transforms(const unsigned char* metadata, size_t metadata_size,
 	unsigned char* raw_data, size_t raw_data_size)
 {
 	const double* metadata_ = reinterpret_cast<const double*>(metadata);
 
 	const uint32_t num_tracks = static_cast<uint32_t>(metadata_[0]);
-	const sample_types sample_type = static_cast<sample_types>(metadata_[1]);
 	const uint32_t num_samples_per_track = static_cast<uint32_t>(metadata_[2]);
 	const float sample_rate = static_cast<float>(metadata_[3]);
-
-	if (sample_type != sample_types::qvvd)
-		return 0;	// Only QVV is supported for now
 
 	const size_t expected_metadata_size = sizeof(double) * 4 + sizeof(qvv_track_description) * num_tracks;
 	if (expected_metadata_size != metadata_size)
@@ -157,8 +161,91 @@ int compress(const unsigned char* metadata, size_t metadata_size,
 
 	// Copy our compressed clip back into the raw data buffer, it is no longer needed
 	// and it should be large enough.
-	std::memcpy((void*)raw_data, compressed_clip, compressed_size);
+	std::memcpy(raw_data, compressed_clip, compressed_size);
 
 	allocator.deallocate(compressed_clip, compressed_size);
 	return compressed_size;
+}
+
+static int compress_scalars(const unsigned char* metadata, size_t metadata_size,
+	unsigned char* raw_data, size_t raw_data_size)
+{
+	const double* metadata_ = reinterpret_cast<const double*>(metadata);
+
+	const uint32_t num_tracks = static_cast<uint32_t>(metadata_[0]);
+	const uint32_t num_samples_per_track = static_cast<uint32_t>(metadata_[2]);
+	const float sample_rate = static_cast<float>(metadata_[3]);
+
+	const size_t expected_metadata_size = sizeof(double) * 4 + sizeof(scalar_track_description) * num_tracks;
+	if (expected_metadata_size != metadata_size)
+		return -1;	// Invalid metadata size
+
+	const size_t expected_raw_data_size = sizeof(double) * num_samples_per_track * num_tracks;
+	if (raw_data_size < expected_raw_data_size)
+		return -2;	// Invalid raw data size
+
+	const double* raw_data_ = reinterpret_cast<const double*>(raw_data);
+	const scalar_track_description* track_descriptions = reinterpret_cast<const scalar_track_description*>(metadata_ + 4);
+
+	acl::ANSIAllocator allocator;
+
+	acl::track_array tracks(allocator, num_tracks);
+	for (uint32_t track_index = 0; track_index < num_tracks; ++track_index)
+	{
+		const scalar_track_description& js_desc = track_descriptions[track_index];
+
+		acl::track_desc_scalarf desc;
+		desc.output_index = js_desc.output_index >= 0.0 ? static_cast<uint32_t>(js_desc.output_index) : acl::k_invalid_track_index;
+		desc.precision = static_cast<float>(js_desc.precision);
+
+		acl::track_float1f track = acl::track_float1f::make_reserve(desc, allocator, num_samples_per_track, sample_rate);
+
+		const uint32_t track_raw_data_offset = track_index * num_samples_per_track;
+		for (uint32_t sample_index = 0; sample_index < num_samples_per_track; ++sample_index)
+		{
+			const uint32_t sample_raw_data_offset = sample_index + track_raw_data_offset;
+			const rtm::scalard sample_value = rtm::scalar_load(raw_data_ + sample_raw_data_offset);
+
+			track[sample_index] = rtm::scalar_cast(sample_value);
+		}
+
+		tracks[track_index] = std::move(track);
+	}
+
+	acl::compression_settings settings;
+
+	acl::compressed_tracks* compressed_tracks = nullptr;
+	acl::OutputStats stats;
+	const acl::ErrorResult result = acl::compress_track_list(allocator, tracks, settings, compressed_tracks, stats);
+
+	if (result.any())
+		return -3;	// Compression failed
+
+	const uint32_t compressed_size = compressed_tracks->get_size();
+	if (raw_data_size < compressed_size)
+	{
+		allocator.deallocate(compressed_tracks, compressed_size);
+		return -4;	// Raw dara buffer is too small
+	}
+
+	// Copy our compressed tracks back into the raw data buffer, it is no longer needed
+	// and it should be large enough.
+	std::memcpy(raw_data, compressed_tracks, compressed_size);
+
+	allocator.deallocate(compressed_tracks, compressed_size);
+	return compressed_size;
+}
+
+int compress(const unsigned char* metadata, size_t metadata_size,
+	unsigned char* raw_data, size_t raw_data_size)
+{
+	const double* metadata_ = reinterpret_cast<const double*>(metadata);
+	const sample_types sample_type = static_cast<sample_types>(metadata_[1]);
+
+	if (sample_type == sample_types::qvvd)
+		return compress_transforms(metadata, metadata_size, raw_data, raw_data_size);
+	else if (sample_type == sample_types::floatd)
+		return compress_scalars(metadata, metadata_size, raw_data, raw_data_size);
+	else
+		return 0;	// Sample type not supported
 }
