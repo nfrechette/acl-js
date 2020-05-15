@@ -85,7 +85,7 @@ export class Encoder {
     }
 
     const metadataBufferSize = tracks._metadata.byteLength
-    const metadataBuffer = wasmInstance.exports.sbrk(metadataBufferSize)
+    const metadataBuffer = wasmInstance.exports.malloc(metadataBufferSize)
 
     //console.log(`Writing metadata to WASM heap offset ${metadataBuffer}, ${metadataBufferSize} bytes`)
     wasmHeap.set(new Uint8Array(tracks._metadata.buffer), metadataBuffer)
@@ -93,7 +93,7 @@ export class Encoder {
     // Add a bit of padding to account for our header, etc
     // We'll use the raw data buffer for our output as well
     const rawDataBufferSize = tracks._rawData.byteLength + (64 * 1024)
-    const rawDataBuffer = wasmInstance.exports.sbrk(rawDataBufferSize)
+    const rawDataBuffer = wasmInstance.exports.malloc(rawDataBufferSize)
 
     //console.log(`Writing raw data to WASM heap offset ${rawDataBuffer}, ${rawDataBufferSize} bytes`)
     wasmHeap.set(new Uint8Array(tracks._rawData.buffer), rawDataBuffer)
@@ -105,20 +105,22 @@ export class Encoder {
     let compressedTracks = null
     if (compressedTracksSize <= 0) {
       // Reset our heap
-      wasmInstance.exports.sbrk(metadataBuffer - wasmInstance.exports.sbrk(0))
+      wasmInstance.exports.free(rawDataBuffer)
+      wasmInstance.exports.free(metadataBuffer)
 
       throw new Error(`Failed to compress: ${compressedTracksSize}`)
     }
     else {
-      //console.log(`Reading compressed clip from WASM heap offset ${result}, ${compressedTracksSize} bytes`)
-      compressedTracks = new Uint8Array(compressedTracksSize)
-      compressedTracks.set(wasmHeap.subarray(rawDataBuffer, rawDataBuffer + compressedTracksSize))
+      //console.log(`Reading compressed clip from WASM heap offset ${rawDataBuffer}, ${compressedTracksSize} bytes`)
+      const compressedBuffer = new Uint8Array(compressedTracksSize)
+      compressedBuffer.set(wasmHeap.subarray(rawDataBuffer, rawDataBuffer + compressedTracksSize))
 
-      compressedTracks = new CompressedTracks(compressedTracks)
+      compressedTracks = new CompressedTracks(compressedBuffer)
     }
 
     // Reset our heap
-    wasmInstance.exports.sbrk(metadataBuffer - wasmInstance.exports.sbrk(0))
+    wasmInstance.exports.free(rawDataBuffer)
+    wasmInstance.exports.free(metadataBuffer)
 
     return compressedTracks
   }
