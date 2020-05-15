@@ -156,7 +156,7 @@ static int compress_transforms(const unsigned char* metadata, size_t metadata_si
 	if (raw_data_size < compressed_size)
 	{
 		allocator.deallocate(compressed_clip, compressed_size);
-		return -4;	// Raw dara buffer is too small
+		return -4;	// Raw data buffer is too small
 	}
 
 	// Copy our compressed clip back into the raw data buffer, it is no longer needed
