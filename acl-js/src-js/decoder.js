@@ -264,7 +264,7 @@ export class Decoder {
         }
 
         resultBufferU8 = decompressedTracks._mem.array
-        resultBufferOffset = /*decompressedTracks._mem.byteOffset + */trackIndex * sampleSize
+        resultBufferOffset = trackIndex * sampleSize
       }
       else if (decompressedTracks instanceof Uint8Array) {
         resultBufferU8 = decompressedTracks
