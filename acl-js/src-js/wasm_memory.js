@@ -23,18 +23,18 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 export class WASMMemory {
-  constructor(wasmState, arrayU8) {
+  constructor(wasmState, arrayU8, memPtr) {
     this._wasmState = wasmState
     this._arrayU8 = arrayU8
     this._byteOffset = arrayU8.byteOffset
     this._byteLength = arrayU8.byteLength
     this._heap = wasmState.heap
-    this._isQueuedForFree = false
+    this._memPtr = memPtr
     this._generation = 0
   }
 
   get array() {
-    if (this._isQueuedForFree) {
+    if (this._memPtr === 0) {
       throw new Error('WASM memory has been freed already')
     }
 

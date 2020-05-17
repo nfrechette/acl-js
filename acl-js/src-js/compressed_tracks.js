@@ -118,7 +118,7 @@ export class CompressedTracks {
 
   dispose() {
     if (this._mem) {
-      this._decoder.queueFree(this._mem)
+      this._decoder.free(this._mem)
     }
 
     this._mem = null
