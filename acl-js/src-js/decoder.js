@@ -32,9 +32,6 @@ const wasmState = {
   module: null,
   instance: null,
   heap: null,
-  heapAllocations: [],
-  heapFreeQueue: [],
-  heapInitialSize: 0,
   initPromise: null,
 }
 
@@ -72,17 +69,8 @@ export class Decoder {
           wasmState.instance.exports._start()
           importObject.env.emscripten_notify_memory_growth(0)
 
-          // Make sure our segment head is aligned to 16 bytes
-          const segmentHead = wasmState.instance.exports.sbrk(0)
-          const alignmentOverhead = segmentHead & 0x15
-          if (alignmentOverhead != 0) {
-            wasmState.instance.exports.sbrk(16 - alignmentOverhead)
-          }
-
-          wasmState.heapInitialSize = wasmState.instance.exports.sbrk(0)
-
-          // Reserve memory to decompress single tracks
-          that._decompressTrackTmpBuffer = wasmState.instance.exports.sbrk(256)
+          // Reserve memory to decompress single tracks, aligned to 16 bytes
+          that._decompressTrackTmpBuffer = (wasmState.instance.exports.malloc(256) + 15) & ~15
         })
     }
   }
@@ -92,28 +80,28 @@ export class Decoder {
   }
 
   // Allocate memory in the WASM heap
+  // Memory allocated is always 16 bytes aligned and a multiply of 16 bytes
   malloc(bufferSize) {
     if (!wasmState.module) {
       throw new Error('WASM module not ready')
     }
 
-    // Round to multiple of 16 bytes
-    const bufferSizePadded = (bufferSize + 15) & ~15
-    const bufferOffset = wasmState.instance.exports.sbrk(bufferSizePadded)
+    // Round to multiple of 16 bytes and add 16 bytes of padding
+    const bufferSizePadded = ((bufferSize + 15) & ~15) + 16
     //console.log(`Allocating ${bufferSizePadded} bytes on WASM heap at ${bufferOffset}`)
 
+    // Allocate and make sure we are aligned to 16 bytes
+    const bufferOffset = wasmState.instance.exports.malloc(bufferSizePadded)
+    const bufferOffsetAligned = (bufferOffset + 15) & ~15
+
     // Create our byte buffer and add metadata
-    const buffer = new Uint8Array(wasmState.heap.buffer, bufferOffset, bufferSizePadded)
+    const buffer = new Uint8Array(wasmState.heap.buffer, bufferOffsetAligned, bufferSizePadded)
 
-    const mem = new WASMMemory(wasmState, buffer)
-    wasmState.heapAllocations.push(mem)
-
-    return mem
+    return new WASMMemory(wasmState, buffer, bufferOffset)
   }
 
-  // Flag the memory as no longer being in use and queue it for freeing
-  // Memory will actually be freed once garbageCollect() is called
-  queueFree(mem) {
+  // Free memory from our WASM heap
+  free(mem) {
     if (!mem) {
       return  // Nothing to do
     }
@@ -122,63 +110,18 @@ export class Decoder {
       throw new Error('WASM module not ready')
     }
 
+    if (!(mem instanceof WASMMemory)) {
+      throw new TypeError("'mem' must be a WASMMemory instance")
+    }
+
     if (mem._wasmState !== wasmState) {
       throw new Error("Memory doesn't belong to this WASM heap")
     }
 
-    if (mem._isQueuedForFree) {
-      throw new Error('Memory is already queued for free')
+    if (mem._memPtr !== 0) {
+      wasmState.instance.exports.free(mem._memPtr)
+      mem._memPtr = 0
     }
-
-    // Flag and queue our buffer
-    mem._isQueuedForFree = true
-    wasmState.heapFreeQueue.push(mem)
-  }
-
-  // Free any memory we might have queued up for freeing
-  garbageCollect() {
-    if (!wasmState.module) {
-      throw new Error('WASM module not ready')
-    }
-
-    if (wasmState.heapFreeQueue.length == 0) {
-      return  // Nothing to do
-    }
-
-    const liveHeapAllocations = []
-
-    let heapOffset = wasmState.heapInitialSize
-    //console.log(`Running WASM heap garbage collection from offset ${heapOffset} ...`)
-
-    wasmState.heapAllocations.forEach((mem) => {
-      if (mem._isQueuedForFree) {
-        return  // This memory block is being freed, skip it
-      }
-
-      if (mem.byteOffset != heapOffset) {
-        //console.log(`Moving allocation from ${mem.byteOffset} to ${heapOffset} ...`)
-        wasmState.heap.set(mem.array, heapOffset)
-
-        // Update and invalidate our memory bindings to avoid keeping stale references
-        mem._arrayU8 = null
-        mem._heap = null
-        mem._byteOffset = heapOffset
-      }
-
-      liveHeapAllocations.push(mem)
-      heapOffset += mem.byteLength
-    })
-
-    // Reset our heap
-    //console.log(`Freed ${wasmState.instance.exports.sbrk(0) - heapOffset} bytes!`)
-    wasmState.instance.exports.sbrk(heapOffset - wasmState.instance.exports.sbrk(0))
-    wasmState.heapAllocations = liveHeapAllocations
-    wasmState.heapFreeQueue = []
-
-    // Rebind if needed
-    wasmState.heapAllocations.forEach((mem) => {
-      mem.array
-    })
   }
 
   decompressTracks(compressedTracks, sampleTime, roundingPolicy, decompressedTracks) {

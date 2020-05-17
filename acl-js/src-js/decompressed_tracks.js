@@ -56,13 +56,12 @@ export class DecompressedTracks {
   }
 
   resize(byteLength) {
-    const byteLengthPadded = (byteLength + 15) & ~15
-    if (byteLengthPadded !== this.byteLength) {
+    if (byteLength !== this.byteLength) {
       if (this._mem) {
-        this._decoder.queueFree(this._mem)
+        this._decoder.free(this._mem)
       }
 
-      this._mem = this._decoder.malloc(byteLengthPadded)
+      this._mem = this._decoder.malloc(byteLength)
       this._array = null
       this._generation = -1
     }
@@ -70,7 +69,7 @@ export class DecompressedTracks {
 
   dispose() {
     if (this._mem) {
-      this._decoder.queueFree(this._mem)
+      this._decoder.free(this._mem)
       this._mem = null
       this._array = null
       this._generation = -1
