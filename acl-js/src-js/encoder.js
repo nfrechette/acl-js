@@ -60,13 +60,6 @@ export class Encoder {
           // Run static initializers
           wasmInstance.exports._start()
           importObject.env.emscripten_notify_memory_growth(0)
-
-          // Make sure our segment head is aligned to 16 bytes
-          const segmentHead = wasmInstance.exports.sbrk(0)
-          const alignmentOverhead = segmentHead & 0x15
-          if (alignmentOverhead != 0) {
-            wasmInstance.exports.sbrk(16 - alignmentOverhead)
-          }
         })
     }
   }
