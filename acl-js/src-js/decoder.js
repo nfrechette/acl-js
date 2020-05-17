@@ -58,9 +58,11 @@ function unhex(data) {
 export class Decoder {
   constructor() {
     this._state = wasmState
+    this._decompressTrackTmpBuffer = 0
 
     if (!wasmState.initPromise) {
       // The first time we create a decoder, we load the WASM code and init everything
+      const that = this
       wasmState.initPromise = WebAssembly.instantiate(unhex(wasmBinaryBlob), importObject)
         .then(obj => {
           wasmState.module = obj.module
@@ -78,6 +80,9 @@ export class Decoder {
           }
 
           wasmState.heapInitialSize = wasmState.instance.exports.sbrk(0)
+
+          // Reserve memory to decompress single tracks
+          that._decompressTrackTmpBuffer = wasmState.instance.exports.sbrk(256)
         })
     }
   }
@@ -250,10 +255,10 @@ export class Decoder {
       throw new TypeError("'roundingPolicy' must be a RoundingPolicy")
     }
 
+    const sampleSize = compressedTracks.sampleSize
+
     let resultBufferU8 = null
     let resultBufferOffset = 0
-    const sampleSize = compressedTracks.sampleSize
-    const outputBuffer = wasmState.instance.exports.sbrk(sampleSize)
 
     if (decompressedTracks) {
       if (decompressedTracks instanceof DecompressedTracks) {
@@ -286,22 +291,17 @@ export class Decoder {
 
     const compressedTracksSize = compressedTracks._mem.byteLength
     const compressedTracksBuffer = compressedTracks._mem.byteOffset
+    const outputBuffer = this._decompressTrackTmpBuffer
 
     const result = wasmState.instance.exports.decompress_track(compressedTracksBuffer, compressedTracksSize, sampleTime, roundingPolicy.value, trackIndex, outputBuffer, sampleSize)
     //console.log(`Decompression result: ${result}`)
     if (result != 0) {
-      // Reset our heap
-      wasmState.instance.exports.sbrk(outputBuffer - wasmState.instance.exports.sbrk(0))
-
       throw new Error(`Decompression failed: ${result}`)
     }
 
     // Copy our decompressed tracks out of the WASM heap
     //console.log(`Reading decompressed tracks from WASM heap offset ${outputBuffer}, ${outputBufferSize} bytes`)
     resultBufferU8.set(wasmState.heap.subarray(outputBuffer, outputBuffer + sampleSize), resultBufferOffset)
-
-    // Reset our heap
-    wasmState.instance.exports.sbrk(outputBuffer - wasmState.instance.exports.sbrk(0))
 
     return decompressedTracks
   }
