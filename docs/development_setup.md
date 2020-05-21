@@ -9,7 +9,6 @@ In order to contribute to or build `acl-js` you will first need to setup your en
 3. Generate the the make files with: `python make.py` (output under `./build`).
 4. Build with: `python make.py -build` (output under `./bin`).
 5. Run the unit tests with: `python make.py -unit_test`
-6. Run the regression tests with: `python make.py -regression_test` (see [here](../test_data/README.md) for details).
 
 *Above steps have been tested under OS X and Linux.*
 
