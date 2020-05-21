@@ -15,7 +15,8 @@ If you wish to run the unit tests or contribute to `acl-js`, head on over to the
 
 ## External dependencies
 
-You don't need anything else to get started: everything is self contained.
+You don't need anything else to get started: everything is self contained. There are no JS dependencies required for this module and all C++ dependencies used during decompression use the MIT license.
+
 See [here](./external) for details.
 
 ## License, copyright, and code of conduct
