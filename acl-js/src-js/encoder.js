@@ -25,6 +25,7 @@
 import { wasmBinaryBlob } from './encoder.wasm.js'
 import { TrackArray } from "./track_array";
 import { CompressedTracks } from './compressed_tracks.js'
+import { TrackError } from './track_error.js';
 
 let wasmModule = null
 let wasmInstance = null
@@ -109,7 +110,11 @@ export class Encoder {
       const compressedBuffer = new Uint8Array(compressedTracksSize)
       compressedBuffer.set(wasmHeap.subarray(rawDataBuffer, rawDataBuffer + compressedTracksSize))
 
-      compressedTracks = new CompressedTracks(compressedBuffer)
+      const errorDataSize = 8 * 3 // 3x double values
+      const errorData = new Float64Array(wasmHeap.buffer, metadataBuffer, 3)
+      const trackError = new TrackError(errorData[0], errorData[1], errorData[2])
+
+      compressedTracks = new CompressedTracks(compressedBuffer, trackError)
     }
 
     wasmInstance.exports.free(buffer)
