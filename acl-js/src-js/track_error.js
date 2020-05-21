@@ -1,5 +1,3 @@
-#pragma once
-
 ////////////////////////////////////////////////////////////////////////////////
 // The MIT License (MIT)
 //
@@ -24,18 +22,10 @@
 // SOFTWARE.
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <emscripten.h>
-#include <cstddef>
-
-#if defined(__cplusplus)
-extern "C"
-{
-#endif
-
-EMSCRIPTEN_KEEPALIVE
-int compress(unsigned char* metadata, size_t metadata_size,
-	unsigned char* raw_data, size_t raw_data_size);
-
-#if defined(__cplusplus)
+export class TrackError {
+  constructor(trackIndex, error, sampleTime) {
+    this.trackIndex = trackIndex
+    this.error = error
+    this.sampleTime = sampleTime
+  }
 }
-#endif

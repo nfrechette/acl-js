@@ -26,7 +26,7 @@ import { Decoder } from './decoder.js'
 import { SampleTypes } from './sample_types.js'
 
 export class CompressedTracks {
-  constructor(buffer) {
+  constructor(buffer, trackError) {
     if (!buffer) {
       throw new TypeError("'buffer' must be an ArrayBuffer or Uint8Array")
     }
@@ -84,6 +84,7 @@ export class CompressedTracks {
 
     this._decoder = null
     this._mem = null
+    this._error = trackError
   }
 
   get byteLength() {
@@ -96,6 +97,10 @@ export class CompressedTracks {
 
   get isBound() {
     return !!this._decoder
+  }
+
+  get error() {
+    return this._error
   }
 
   bind(decoder) {

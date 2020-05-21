@@ -27,9 +27,12 @@
 #include <acl/compression/animation_clip.h>
 #include <acl/compression/compress.h>
 #include <acl/compression/skeleton.h>
+#include <acl/compression/track_error.h>
+#include <acl/compression/utils.h>
 #include <acl/core/ansi_allocator.h>
 
 #include <acl/algorithm/uniformly_sampled/encoder.h>
+#include <acl/algorithm/uniformly_sampled/decoder.h>
 
 #include <cstdint>
 
@@ -59,6 +62,21 @@ struct scalar_track_description
 	double output_index;
 
 	double precision;
+};
+
+struct track_error
+{
+	//////////////////////////////////////////////////////////////////////////
+	// The track/transform index.
+	double index;
+
+	//////////////////////////////////////////////////////////////////////////
+	// The measured error value.
+	double error;
+
+	//////////////////////////////////////////////////////////////////////////
+	// The point in time where the error was measured.
+	double sample_time;
 };
 
 static acl::RigidSkeleton build_skeleton(const qvv_track_description* track_descriptions, uint32_t num_transforms, acl::IAllocator& allocator)
@@ -110,7 +128,7 @@ static acl::AnimationClip build_clip(const qvv_track_description* track_descript
 	return clip;
 }
 
-static int compress_transforms(const unsigned char* metadata, size_t metadata_size,
+static int compress_transforms(unsigned char* metadata, size_t metadata_size,
 	unsigned char* raw_data, size_t raw_data_size)
 {
 	const double* metadata_ = reinterpret_cast<const double*>(metadata);
@@ -159,6 +177,16 @@ static int compress_transforms(const unsigned char* metadata, size_t metadata_si
 		return -4;	// Raw data buffer is too small
 	}
 
+	acl::uniformly_sampled::DecompressionContext<acl::uniformly_sampled::DebugDecompressionSettings> context;
+	context.initialize(*compressed_clip);
+
+	const acl::BoneError bone_error = acl::calculate_error_between_clips(allocator, error_metric, clip, context);
+	const track_error err = { double(bone_error.index), double(bone_error.error), double(bone_error.sample_time) };
+
+	// Copy our error stats into the metadata buffer, it is no longer needed
+	// and it should be large enough
+	std::memcpy(metadata, &err, sizeof(track_error));
+
 	// Copy our compressed clip back into the raw data buffer, it is no longer needed
 	// and it should be large enough.
 	std::memcpy(raw_data, compressed_clip, compressed_size);
@@ -167,7 +195,7 @@ static int compress_transforms(const unsigned char* metadata, size_t metadata_si
 	return compressed_size;
 }
 
-static int compress_scalars(const unsigned char* metadata, size_t metadata_size,
+static int compress_scalars(unsigned char* metadata, size_t metadata_size,
 	unsigned char* raw_data, size_t raw_data_size)
 {
 	const double* metadata_ = reinterpret_cast<const double*>(metadata);
@@ -228,6 +256,16 @@ static int compress_scalars(const unsigned char* metadata, size_t metadata_size,
 		return -4;	// Raw dara buffer is too small
 	}
 
+	acl::decompression_context<acl::debug_decompression_settings> context;
+	context.initialize(*compressed_tracks);
+
+	const acl::track_error track_err = acl::calculate_compression_error(allocator, tracks, context);
+	const track_error err = { double(track_err.index), double(track_err.error), double(track_err.sample_time) };
+
+	// Copy our error stats into the metadata buffer, it is no longer needed
+	// and it should be large enough
+	std::memcpy(metadata, &err, sizeof(track_error));
+
 	// Copy our compressed tracks back into the raw data buffer, it is no longer needed
 	// and it should be large enough.
 	std::memcpy(raw_data, compressed_tracks, compressed_size);
@@ -236,7 +274,7 @@ static int compress_scalars(const unsigned char* metadata, size_t metadata_size,
 	return compressed_size;
 }
 
-int compress(const unsigned char* metadata, size_t metadata_size,
+int compress(unsigned char* metadata, size_t metadata_size,
 	unsigned char* raw_data, size_t raw_data_size)
 {
 	const double* metadata_ = reinterpret_cast<const double*>(metadata);

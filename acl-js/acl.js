@@ -31,6 +31,7 @@ export { Sample } from './src-js/sample.js'
 export { SampleTypes, isSampleType } from './src-js/sample_types.js'
 export { Track } from './src-js/track.js'
 export { TrackArray } from './src-js/track_array.js'
+export { TrackError } from './src-js/track_error.js'
 export { ScalarTrackDescription, TransformTrackDescription } from './src-js/track_desc.js'
 export { Encoder } from './src-js/encoder.js'
 
