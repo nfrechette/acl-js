@@ -5,9 +5,11 @@
 
 # Animation Compression Library JavaScript Module
 
-This module uses [Animation Compression Library](https://github.com/nfrechette/acl) compiled through `emscripten 1.39.11` into WebAssembly. This allows fast decompression of animations compressed with ACL.
+This module uses the C++11 [Animation Compression Library](https://github.com/nfrechette/acl) compiled with `emscripten 1.39.11` into WebAssembly. This allows fast compression and decompression of animations with Javascript. Animations can also be compressed offline with ACL and played back efficiently in a web browser.
 
-## Getting started
+The [glTF viewer](./tools/gltf_viewer) tool shows how this module can be used to both compress and decompress animations. You can see it live [here](https://nfrechette.github.io/acl_viewer/).
+
+## How to contribute or built locally
 
 If you wish to run the unit tests or contribute to `acl-js`, head on over to the [development setup](./docs/development_setup.md) section in order to setup your environment and make sure to check out the [contributing guidelines](CONTRIBUTING.md).
 
