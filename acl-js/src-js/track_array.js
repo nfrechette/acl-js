@@ -130,6 +130,12 @@ export class TrackArray {
     return this._tracks[trackIndex]
   }
 
+  getRawSize() {
+    const numFloatsPerSample = getNumFloatsPerSample(this.sampleType)
+    const numBytesPerSample = numFloatsPerSample * 4
+    return numBytesPerSample * this._numSamplesPerTrack * this._numTracks
+  }
+
   isValid() {
     for (let i = 0; i < this._numTracks; ++i) {
       if (!this._tracks[i].isValid()) {
