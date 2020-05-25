@@ -22,7 +22,13 @@
 // SOFTWARE.
 ////////////////////////////////////////////////////////////////////////////////
 
+////////////////////////////////////////////////////////////////////////////////
+// Represents a Quaternion.
+// The real part is [x,y,z] and [w] is the imaginary part.
+////////////////////////////////////////////////////////////////////////////////
 export class Quat {
+  ////////////////////////////////////////////////////////////////////////////////
+  // Constructs a quaternion from its four values.
   constructor(x, y, z, w) {
     if (typeof x !== 'number') {
       throw new TypeError("'x' must be a Number")
@@ -46,16 +52,22 @@ export class Quat {
     this.w = w
   }
 
+  ////////////////////////////////////////////////////////////////////////////////
+  // Returns true if this quaternion instance is finite and normalized.
   isValid() {
     const lenSq = (this.x * this.x) + (this.y * this.y) + (this.z * this.z) + (this.w * this.w)
     if (!Number.isFinite(lenSq)) return false
     return Math.abs(lenSq - 1.0) < 0.0001
   }
 
+  ////////////////////////////////////////////////////////////////////////////////
+  // Returns a deep copy of this quaternion instance.
   clone() {
     return new Quat(this.x, this.y, this.z, this.w)
   }
 
+  ////////////////////////////////////////////////////////////////////////////////
+  // Normalizes this quaternion instance in place.
   normalize() {
     const lenSq = Quat.dot(this, this)
     const invLen = 1.0 / Math.sqrt(lenSq)
@@ -66,10 +78,16 @@ export class Quat {
     return this
   }
 
+  ////////////////////////////////////////////////////////////////////////////////
+  // Returns the dot product between two quaternions.
   static dot(lhs, rhs) {
     return (lhs.x * rhs.x) + (lhs.y * rhs.y) + (lhs.z * rhs.z) + (lhs.w * rhs.w)
   }
 
+  ////////////////////////////////////////////////////////////////////////////////
+  // Returns the linear interpolation between two quaternions.
+  // A bias is used to ensure the shortest path is taken but if the quaternions
+  // represent rotations that are far apart, this might not be very accurate.
   static lerp(lhs, rhs, alpha) {
     const dot_ = Quat.dot(lhs, rhs)
     const alpha0 = 1.0 - alpha
@@ -82,6 +100,8 @@ export class Quat {
     return result.normalize()
   }
 
+  ////////////////////////////////////////////////////////////////////////////////
+  // Returns a new instance of the quaternion identity.
   static get identity() {
     return new Quat(0.0, 0.0, 0.0, 1.0)
   }

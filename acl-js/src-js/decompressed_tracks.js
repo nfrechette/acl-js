@@ -24,7 +24,15 @@
 
 import { Decoder } from './decoder.js'
 
+////////////////////////////////////////////////////////////////////////////////
+// DecompressedTracks hold a buffer of Float32Array that can be used to decompress.
+// The memory owned by this instance belongs to the decoder WASM heap and it can
+// relocate. Care must be taken now to hold and cache references to the underlying
+// array. This is done to avoid unnecessary copying during decompression.
+////////////////////////////////////////////////////////////////////////////////
 export class DecompressedTracks {
+  ////////////////////////////////////////////////////////////////////////////////
+  // Constructs a DecompressedTracks instance and binds it to the provided decoder.
   constructor(decoder) {
     if (!decoder || !(decoder instanceof Decoder)) {
       throw new TypeError("'decoder' must be a Decoder instance")
@@ -36,10 +44,16 @@ export class DecompressedTracks {
     this._generation = -1
   }
 
+  ////////////////////////////////////////////////////////////////////////////////
+  // Returns the buffer byte length.
   get byteLength() {
     return this._mem ? this._mem.byteLength : 0
   }
 
+  ////////////////////////////////////////////////////////////////////////////////
+  // Returns the underlying Float32Array that contains the decompressed data.
+  // This memory is owned by the WASM heap and it can relocate.
+  // Do not cache references to this array.
   get array() {
     if (!this._mem) {
       return null
@@ -55,6 +69,8 @@ export class DecompressedTracks {
     return this._array
   }
 
+  ////////////////////////////////////////////////////////////////////////////////
+  // Grows or shrinks the underlying Float32Array to match the desired byte length.
   resize(byteLength) {
     if (byteLength !== this.byteLength) {
       if (this._mem) {
@@ -67,6 +83,8 @@ export class DecompressedTracks {
     }
   }
 
+  ////////////////////////////////////////////////////////////////////////////////
+  // Disposes of the WASM memory used by this instance.
   dispose() {
     if (this._mem) {
       this._decoder.free(this._mem)

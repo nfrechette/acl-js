@@ -30,11 +30,22 @@ import { Quat } from './quat.js'
 import { Vec3 } from './vec3.js'
 import { findLinearInterpolationSamplesWithSampleRate } from './util.js'
 
+//////////////////////////////////////////////////////////////////////////
+// An array of tracks.
+// Each track has the same type, the same number of samples, and the same
+// sample rate.
+//////////////////////////////////////////////////////////////////////////
 export class TrackArray {
+  //////////////////////////////////////////////////////////////////////////
+  // Number of metadata floats required
   static getMetadataSize(numTracks, sampleType, numSamplesPerTrack) {
     return Track.getMetadataSize(sampleType) * numTracks + 4
   }
 
+  //////////////////////////////////////////////////////////////////////////
+  // Constructs an array with the specified number of tracks, number of samples,
+  // sample type, and sample rate.
+  // Each track will pre-allocate.
   constructor(numTracks, sampleType, numSamplesPerTrack, sampleRate) {
     if (!Number.isInteger(numTracks)) {
       throw new TypeError("'numTracks' must be an integer")
@@ -98,22 +109,32 @@ export class TrackArray {
     metadata[3] = sampleRate
   }
 
+  //////////////////////////////////////////////////////////////////////////
+  // Returns the number of tracks contained in this array.
   get numTracks() {
     return this._numTracks
   }
 
+  //////////////////////////////////////////////////////////////////////////
+  // Returns the number of samples per track in this array.
   get numSamplesPerTrack() {
     return this._numSamplesPerTrack
   }
 
+  //////////////////////////////////////////////////////////////////////////
+  // Returns the track type for tracks in this array.
   get sampleType() {
     return this._sampleType
   }
 
+  //////////////////////////////////////////////////////////////////////////
+  // Returns the sample rate for tracks in this array.
   get sampleRate() {
     return this._sampleRate
   }
 
+  //////////////////////////////////////////////////////////////////////////
+  // Returns the duration for tracks in this array.
   get duration() {
     if (this._numTracks === 0) {
       return 0.0
@@ -122,6 +143,8 @@ export class TrackArray {
     return this._tracks[0].duration
   }
 
+  //////////////////////////////////////////////////////////////////////////
+  // Returns the track at the specified index.
   at(trackIndex) {
     if (trackIndex < 0 || trackIndex >= this._numTracks) {
       throw new RangeError('Invalid track index');
@@ -130,12 +153,21 @@ export class TrackArray {
     return this._tracks[trackIndex]
   }
 
+  //////////////////////////////////////////////////////////////////////////
+  // Returns the raw size in bytes for this track array. Note that this differs from the actual
+  // memory used by an instance of this class. It is meant for comparison against
+  // the compressed size.
   getRawSize() {
     const numFloatsPerSample = getNumFloatsPerSample(this.sampleType)
     const numBytesPerSample = numFloatsPerSample * 4
     return numBytesPerSample * this._numSamplesPerTrack * this._numTracks
   }
 
+  //////////////////////////////////////////////////////////////////////////
+  // Returns whether a track array is valid or not.
+  // An array is valid if:
+  //    - It is empty
+  //    - All tracks are valid
   isValid() {
     for (let i = 0; i < this._numTracks; ++i) {
       if (!this._tracks[i].isValid()) {
@@ -146,6 +178,10 @@ export class TrackArray {
     return true
   }
 
+  //////////////////////////////////////////////////////////////////////////
+  // Sample all tracks within this array at the specified sample time and
+  // desired rounding policy.
+  // Returns an array of sample values (QVV, float, etc).
   sampleTracks(sampleTime, roundingPolicy) {
     const result = new Array(this._numTracks)
 
@@ -156,6 +192,10 @@ export class TrackArray {
     return result
   }
 
+  //////////////////////////////////////////////////////////////////////////
+  // Sample a single track within this array at the specified sample time and
+  // desired rounding policy.
+  // Returns a sample value (QVV, float, etc).
   sampleTrack(trackIndex, sampleTime, roundingPolicy) {
     if (!Number.isInteger(trackIndex) || trackIndex < 0 || trackIndex >= this._numTracks) {
       throw new RangeError(`Invalid track index: ${trackIndex}`);

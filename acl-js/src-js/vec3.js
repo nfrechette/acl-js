@@ -22,7 +22,12 @@
 // SOFTWARE.
 ////////////////////////////////////////////////////////////////////////////////
 
+////////////////////////////////////////////////////////////////////////////////
+// Represents a 3D vector.
+////////////////////////////////////////////////////////////////////////////////
 export class Vec3 {
+  ////////////////////////////////////////////////////////////////////////////////
+  // Constructs a vec3 from its three values.
   constructor(x, y, z) {
     if (typeof x !== 'number') {
       throw new TypeError("'x' must be a Number")
@@ -41,6 +46,8 @@ export class Vec3 {
     this.z = z
   }
 
+  ////////////////////////////////////////////////////////////////////////////////
+  // Returns true if this vec3 instance is finite.
   isValid() {
     if (!Number.isFinite(this.x)) return false
     if (!Number.isFinite(this.y)) return false
@@ -48,14 +55,20 @@ export class Vec3 {
     return true
   }
 
+  ////////////////////////////////////////////////////////////////////////////////
+  // Returns a deep copy of this vec3 instance.
   clone() {
     return new Vec3(this.x, this.y, this.z)
   }
 
+  ////////////////////////////////////////////////////////////////////////////////
+  // Add two vec3 instances component wise.
   static add(lhs, rhs) {
     return new Vec3(lhs.x + rhs.x, lhs.y + rhs.y, lhs.z + rhs.z)
   }
 
+  ////////////////////////////////////////////////////////////////////////////////
+  // Multiplies two vec3 instances component wise or a vec3 by a scalar.
   static mul(lhs, rhs) {
     if (typeof rhs === 'number') {
       return new Vec3(lhs.x * rhs, lhs.y * rhs, lhs.z * rhs)
@@ -65,14 +78,20 @@ export class Vec3 {
     }
   }
 
+  ////////////////////////////////////////////////////////////////////////////////
+  // Returns the linear interpolation between two vec3s.
   static lerp(lhs, rhs, alpha) {
     return Vec3.add(Vec3.mul(lhs, 1.0 - alpha), Vec3.mul(rhs, alpha))
   }
 
+  ////////////////////////////////////////////////////////////////////////////////
+  // Returns a new instance of a 0,0,0 vec3.
   static get zero() {
     return new Vec3(0.0, 0.0, 0.0)
   }
 
+  ////////////////////////////////////////////////////////////////////////////////
+  // Returns a new instance of a 1,1,1 vec3.
   static get one() {
     return new Vec3(1.0, 1.0, 1.0)
   }

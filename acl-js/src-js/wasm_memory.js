@@ -22,7 +22,15 @@
 // SOFTWARE.
 ////////////////////////////////////////////////////////////////////////////////
 
+////////////////////////////////////////////////////////////////////////////////
+// Represents a memory allocation with a WASM heap.
+// Because WASM cannot read JS heap memory, we have to copy data into the WASM heap
+// and as such we have to rely on manual memory management.
+////////////////////////////////////////////////////////////////////////////////
 export class WASMMemory {
+  ////////////////////////////////////////////////////////////////////////////////
+  // Construct an instance of WASMMemory with the heap state it belongs to,
+  // the allocated array, and the raw pointer to it.
   constructor(wasmState, arrayU8, memPtr) {
     this._wasmState = wasmState
     this._arrayU8 = arrayU8
@@ -33,6 +41,9 @@ export class WASMMemory {
     this._generation = 0
   }
 
+  ////////////////////////////////////////////////////////////////////////////////
+  // This memory is owned by the WASM heap and it can relocate.
+  // Do not cache references to this array.
   get array() {
     if (this._memPtr === 0) {
       throw new Error('WASM memory has been freed already')
@@ -48,14 +59,22 @@ export class WASMMemory {
     return this._arrayU8
   }
 
+  ////////////////////////////////////////////////////////////////////////////////
+  // Returns the offset of the buffer in bytes.
   get byteOffset() {
     return this._byteOffset
   }
 
+  ////////////////////////////////////////////////////////////////////////////////
+  // Returns the length of the buffer in bytes.
   get byteLength() {
     return this._byteLength
   }
 
+  ////////////////////////////////////////////////////////////////////////////////
+  // When the WASM heap grows or shrinks, our memory allocation will relocate
+  // and we will increment this generation id. Users of this class should cache
+  // the generation id used and test it to detect when relocation happened.
   get generation() {
     return this._generation
   }

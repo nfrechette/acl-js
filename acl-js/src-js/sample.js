@@ -25,7 +25,16 @@
 import { SampleTypes, isSampleType } from './sample_types.js'
 import { QVV } from './qvv.js'
 
+////////////////////////////////////////////////////////////////////////////////
+// Represents an animation sample.
+// Samples have a type and a value.
+// They do not have a time or position because ACL assumes uniform sampling.
+////////////////////////////////////////////////////////////////////////////////
 export class Sample {
+  ////////////////////////////////////////////////////////////////////////////////
+  // Constructs a Sample instance.
+  // For performance reasons, samples are written at a specific position in a
+  // larger array of sample data.
   constructor(type, rawData, rawDataOffset) {
     if (!isSampleType(type)) {
       throw new TypeError("'type' must be a SampleType")
@@ -48,10 +57,16 @@ export class Sample {
     this._rawDataOffset = rawDataOffset
   }
 
+  ////////////////////////////////////////////////////////////////////////////////
+  // Returns the SampleTypes of this sample.
   get type() {
     return this._type
   }
 
+  ////////////////////////////////////////////////////////////////////////////////
+  // Returns the QVV value of this sample.
+  // If a QVV instance is provided, it will be re-used and returned otherwise
+  // a new instance is allocated.
   getQVV(qvv) {
     if (this._type !== SampleTypes.QVV) {
       throw new TypeError('Sample is not a QVV')
@@ -76,6 +91,8 @@ export class Sample {
     return qvv
   }
 
+  ////////////////////////////////////////////////////////////////////////////////
+  // Sets the QVV sample value.
   setQVV(qvv) {
     if (this._type !== SampleTypes.QVV) {
       throw new TypeError('Sample is not a QVV')
@@ -94,6 +111,8 @@ export class Sample {
     this._rawData[rawDataOffset + 9] = qvv.scale.z
   }
 
+  ////////////////////////////////////////////////////////////////////////////////
+  // Returns the float value of this sample.
   getFloat() {
     if (this._type !== SampleTypes.Float) {
       throw new TypeError('Sample is not a Float')
@@ -102,6 +121,8 @@ export class Sample {
     return this._rawData[this._rawDataOffset]
   }
 
+  ////////////////////////////////////////////////////////////////////////////////
+  // Sets the float value of this sample.
   setFloat(flt) {
     if (this._type !== SampleTypes.Float) {
       throw new TypeError('Sample is not a Float')
@@ -110,6 +131,8 @@ export class Sample {
     this._rawData[this._rawDataOffset] = flt
   }
 
+  ////////////////////////////////////////////////////////////////////////////////
+  // Returns true if the underlying sample is valid and finite.
   isValid() {
     switch (this._type) {
       case SampleTypes.QVV:

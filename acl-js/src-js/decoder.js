@@ -52,7 +52,17 @@ function unhex(data) {
   return bytes.buffer
 }
 
+////////////////////////////////////////////////////////////////////////////////
+// An ACL decoder instance.
+// Constructing a decoder instance initializes WASM. All other instances will
+// share the WASM code and heap for decoding.
+// This class is the bridge between JS and the WASM code.
+////////////////////////////////////////////////////////////////////////////////
 export class Decoder {
+  ////////////////////////////////////////////////////////////////////////////////
+  // Construct an instance of the ACL decoder.
+  // The first instance will initialize WASM and every subsequent instance will share the WASM
+  // code and heap for decoding.
   constructor() {
     this._state = wasmState
     this._decompressTrackTmpBuffer = 0
@@ -75,10 +85,13 @@ export class Decoder {
     }
   }
 
+  ////////////////////////////////////////////////////////////////////////////////
+  // Returns a promise that resolves once the decoder is ready to be used.
   isReady() {
     return wasmState.initPromise
   }
 
+  ////////////////////////////////////////////////////////////////////////////////
   // Allocate memory in the WASM heap
   // Memory allocated is always 16 bytes aligned and a multiply of 16 bytes
   malloc(bufferSize) {
@@ -100,6 +113,7 @@ export class Decoder {
     return new WASMMemory(wasmState, buffer, bufferOffset)
   }
 
+  ////////////////////////////////////////////////////////////////////////////////
   // Free memory from our WASM heap
   free(mem) {
     if (!mem) {
@@ -124,6 +138,10 @@ export class Decoder {
     }
   }
 
+  ////////////////////////////////////////////////////////////////////////////////
+  // Decompress every track at the provided sampleTime with the specified roundingPolicy.
+  // CompressedTracks must have been bound.
+  // Decompressed samples will be written to the DecompressedTracks instance.
   decompressTracks(compressedTracks, sampleTime, roundingPolicy, decompressedTracks) {
     if (!wasmState.module) {
       throw new Error('WASM module not ready')
@@ -168,6 +186,10 @@ export class Decoder {
     return decompressedTracks
   }
 
+  ////////////////////////////////////////////////////////////////////////////////
+  // Decompress a single track at the provided sampleTime with the specified roundingPolicy.
+  // CompressedTracks must have been bound.
+  // The decompressed sample will be written to the DecompressedTracks instance where it belongs.
   decompressTrack(compressedTracks, trackIndex, sampleTime, roundingPolicy, decompressedTracks) {
     if (!wasmState.module) {
       throw new Error('WASM module not ready')

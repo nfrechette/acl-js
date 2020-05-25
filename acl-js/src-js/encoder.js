@@ -49,7 +49,17 @@ function unhex(data) {
   return bytes.buffer
 }
 
+////////////////////////////////////////////////////////////////////////////////
+// An ACL encoder instance.
+// Constructing a encoder instance initializes WASM. All other instances will
+// share the WASM code and heap for encoding.
+// This class is the bridge between JS and the WASM code.
+////////////////////////////////////////////////////////////////////////////////
 export class Encoder {
+  ////////////////////////////////////////////////////////////////////////////////
+  // Construct an instance of the ACL encoder.
+  // The first instance will initialize WASM and every subsequent instance will share the WASM
+  // code and heap for encoding.
   constructor() {
     if (!wasmInitPromise) {
       // The first time we create an encoder, we load the WASM code and init everything
@@ -65,10 +75,14 @@ export class Encoder {
     }
   }
 
+  ////////////////////////////////////////////////////////////////////////////////
+  // Returns a promise that resolves once the encoder is ready to be used.
   isReady() {
     return wasmInitPromise
   }
 
+  ////////////////////////////////////////////////////////////////////////////////
+  // Compresses a TrackArray into a CompressedTracks instance.
   compress(tracks) {
     if (!wasmModule) {
       throw new Error('WASM module not ready')
