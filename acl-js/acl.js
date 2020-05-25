@@ -28,7 +28,7 @@ export { Vec3 } from './src-js/vec3.js'
 
 export { RoundingPolicy, isRoundingPolicy } from './src-js/rounding_policy.js'
 export { Sample } from './src-js/sample.js'
-export { SampleType, isSampleType } from './src-js/sample_types.js'
+export { SampleType, isSampleType } from './src-js/sample_type.js'
 export { Track } from './src-js/track.js'
 export { TrackArray } from './src-js/track_array.js'
 export { TrackError } from './src-js/track_error.js'

@@ -23,7 +23,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 import { QVV } from './qvv.js'
-import { SampleType, isSampleType, getNumFloatsPerSample } from './sample_types.js'
+import { SampleType, isSampleType, getNumFloatsPerSample } from './sample_type.js'
 import { Sample } from './sample.js'
 import { ScalarTrackDescription, TransformTrackDescription } from './track_desc.js'
 
