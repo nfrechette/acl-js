@@ -15,11 +15,11 @@ The [glTF viewer](./tools/gltf_viewer) tool shows how this module can be used to
 import * as ACL from '@nfrechette/acl'
 
 // Create a QVV track array to hold our hierarchical/joint transform raw data.
-// Note that scalar float tracks have the same API with ACL.SampleTypes.Float instead.
+// Note that scalar float tracks have the same API with ACL.SampleType.Float instead.
 const numTracks = 5           // 5 joint transforms
 const numSamplesPerTrack = 30 // 1 second at 30 FPS
 const sampleRate = 30.0       // 30 FPS
-const qvvTracks = new ACL.TrackArray(numTracks, ACL.SampleTypes.QVV, numSamplesPerTrack, sampleRate);
+const qvvTracks = new ACL.TrackArray(numTracks, ACL.SampleType.QVV, numSamplesPerTrack, sampleRate);
 
 // ...
 

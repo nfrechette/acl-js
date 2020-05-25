@@ -22,7 +22,7 @@
 // SOFTWARE.
 ////////////////////////////////////////////////////////////////////////////////
 
-import { SampleTypes, isSampleType } from './sample_types.js'
+import { SampleType, isSampleType } from './sample_types.js'
 import { QVV } from './qvv.js'
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -58,7 +58,7 @@ export class Sample {
   }
 
   ////////////////////////////////////////////////////////////////////////////////
-  // Returns the SampleTypes of this sample.
+  // Returns the SampleType of this sample.
   get type() {
     return this._type
   }
@@ -68,7 +68,7 @@ export class Sample {
   // If a QVV instance is provided, it will be re-used and returned otherwise
   // a new instance is allocated.
   getQVV(qvv) {
-    if (this._type !== SampleTypes.QVV) {
+    if (this._type !== SampleType.QVV) {
       throw new TypeError('Sample is not a QVV')
     }
 
@@ -94,7 +94,7 @@ export class Sample {
   ////////////////////////////////////////////////////////////////////////////////
   // Sets the QVV sample value.
   setQVV(qvv) {
-    if (this._type !== SampleTypes.QVV) {
+    if (this._type !== SampleType.QVV) {
       throw new TypeError('Sample is not a QVV')
     }
 
@@ -114,7 +114,7 @@ export class Sample {
   ////////////////////////////////////////////////////////////////////////////////
   // Returns the float value of this sample.
   getFloat() {
-    if (this._type !== SampleTypes.Float) {
+    if (this._type !== SampleType.Float) {
       throw new TypeError('Sample is not a Float')
     }
 
@@ -124,7 +124,7 @@ export class Sample {
   ////////////////////////////////////////////////////////////////////////////////
   // Sets the float value of this sample.
   setFloat(flt) {
-    if (this._type !== SampleTypes.Float) {
+    if (this._type !== SampleType.Float) {
       throw new TypeError('Sample is not a Float')
     }
 
@@ -135,10 +135,10 @@ export class Sample {
   // Returns true if the underlying sample is valid and finite.
   isValid() {
     switch (this._type) {
-      case SampleTypes.QVV:
+      case SampleType.QVV:
         const qvv = this.getQVV(QVV.identity)
         return qvv.isValid()
-      case SampleTypes.Float:
+      case SampleType.Float:
         const flt = this.getFloat()
         return Number.isFinite(flt)
       default:

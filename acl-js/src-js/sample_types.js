@@ -25,7 +25,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 // Represents the possible types of samples that can be compressed and decompressed.
 ////////////////////////////////////////////////////////////////////////////////
-export const SampleTypes = {
+export const SampleType = {
   ////////////////////////////////////////////////////////////////////////////////
   // A Quaternion-Vector3-Vector3 sample representing rotation, translation, and 3D scale.
   QVV: 'qvv',     // 0
@@ -36,13 +36,13 @@ export const SampleTypes = {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// Returns true if the provided value is a proper SampleTypes instance.
+// Returns true if the provided value is a proper SampleType instance.
 export function isSampleType(sampleType) {
   if (!sampleType) return false
 
   switch (sampleType) {
-    case SampleTypes.QVV:
-    case SampleTypes.Float:
+    case SampleType.QVV:
+    case SampleType.Float:
       return true
     default:
       return false
@@ -50,12 +50,12 @@ export function isSampleType(sampleType) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// Returns the C++ enum value for the given SampleTypes.
+// Returns the C++ enum value for the given SampleType.
 export function sampleTypeToMetadata(sampleType) {
   switch (sampleType) {
-    case SampleTypes.QVV:
+    case SampleType.QVV:
       return 0
-    case SampleTypes.Float:
+    case SampleType.Float:
       return 1
     default:
       return -1
@@ -63,12 +63,12 @@ export function sampleTypeToMetadata(sampleType) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// Returns the number of floats per sample for the given SampleTypes.
+// Returns the number of floats per sample for the given SampleType.
 export function getNumFloatsPerSample(sampleType) {
   switch (sampleType) {
-    case SampleTypes.QVV:
+    case SampleType.QVV:
       return (4 + 3 + 3)
-    case SampleTypes.Float:
+    case SampleType.Float:
       return 1
     default:
       throw new TypeError('Unknown sample type')

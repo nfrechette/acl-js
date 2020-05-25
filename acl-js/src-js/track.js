@@ -23,7 +23,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 import { QVV } from './qvv.js'
-import { SampleTypes, isSampleType, getNumFloatsPerSample } from './sample_types.js'
+import { SampleType, isSampleType, getNumFloatsPerSample } from './sample_types.js'
 import { Sample } from './sample.js'
 import { ScalarTrackDescription, TransformTrackDescription } from './track_desc.js'
 
@@ -34,9 +34,9 @@ export class Track {
     // Ignore sample type, num samples, sample rate since they are identical for all tracks
     // within a track array
     switch (sampleType) {
-      case SampleTypes.QVV:
+      case SampleType.QVV:
         return TransformTrackDescription.getMetadataSize()
-      case SampleTypes.Float:
+      case SampleType.Float:
         return ScalarTrackDescription.getMetadataSize()
       default:
         throw new TypeError('Unknown sample type')
@@ -95,11 +95,11 @@ export class Track {
     const numFloatsPerSample = getNumFloatsPerSample(sampleType)
     let identity = null
     switch (sampleType) {
-      case SampleTypes.QVV:
+      case SampleType.QVV:
         identity = QVV.identity
         this._desc = new TransformTrackDescription(metadata, metadataOffset)
         break
-      case SampleTypes.Float:
+      case SampleType.Float:
         identity = 0.0
         this._desc = new ScalarTrackDescription(metadata, metadataOffset)
         break
@@ -119,10 +119,10 @@ export class Track {
       this._samples[i] = new Sample(sampleType, rawData, sampleRawDataOffset)
 
       switch (sampleType) {
-        case SampleTypes.QVV:
+        case SampleType.QVV:
           this._samples[i].setQVV(identity)
           break
-        case SampleTypes.Float:
+        case SampleType.Float:
           this._samples[i].setFloat(identity)
           break
       }
@@ -155,9 +155,9 @@ export class Track {
   // Returns the size in bytes of each track sample.
   get sampleSize() {
     switch (this.sampleType) {
-      case SampleTypes.QVV:       return (4 + 3 + 3) * 4
-      case SampleTypes.Float:     return 4
-      default:                    throw new TypeError('Unknown sample type')
+      case SampleType.QVV:       return (4 + 3 + 3) * 4
+      case SampleType.Float:     return 4
+      default:                   throw new TypeError('Unknown sample type')
     }
   }
 
