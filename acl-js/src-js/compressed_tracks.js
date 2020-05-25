@@ -23,7 +23,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 import { Decoder } from './decoder.js'
-import { SampleTypes } from './sample_types.js'
+import { SampleType } from './sample_types.js'
 import { TrackError } from './track_error.js'
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -76,7 +76,7 @@ export class CompressedTracks {
       // QVV is 12 floats each
       this.outputBufferSize = this.numTracks * 12 * 4
       this.sampleSize = 12 * 4
-      this.sampleType = SampleTypes.QVV
+      this.sampleType = SampleType.QVV
     }
     else if (bufferHeader[2] == 0xac11ac11) {
       // compressed_tracks is 8 bytes for raw buffer header, and 24 bytes for the tracks header
@@ -91,7 +91,7 @@ export class CompressedTracks {
       // 1 float per track
       this.outputBufferSize = this.numTracks * 4
       this.sampleSize = 4
-      this.sampleType = SampleTypes.Float
+      this.sampleType = SampleType.Float
     }
     else {
       throw new Error('Unrecognized compressed buffer')

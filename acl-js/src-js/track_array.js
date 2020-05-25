@@ -22,7 +22,7 @@
 // SOFTWARE.
 ////////////////////////////////////////////////////////////////////////////////
 
-import { SampleTypes, isSampleType, sampleTypeToMetadata, getNumFloatsPerSample } from './sample_types.js'
+import { SampleType, isSampleType, sampleTypeToMetadata, getNumFloatsPerSample } from './sample_types.js'
 import { isRoundingPolicy } from './rounding_policy.js'
 import { Track } from './track.js'
 import { QVV } from './qvv.js'
@@ -223,7 +223,7 @@ export class TrackArray {
     // Interpolate
     let value = null
     switch (this._sampleType) {
-      case SampleTypes.QVV:
+      case SampleType.QVV:
         const qvv0 = sample0.getQVV(QVV.identity)
         const qvv1 = sample1.getQVV(QVV.identity)
         const rotation = Quat.lerp(qvv0.rotation, qvv1.rotation, interpolationData.interpolationAlpha)
@@ -231,7 +231,7 @@ export class TrackArray {
         const scale = Vec3.lerp(qvv0.scale, qvv1.scale, interpolationData.interpolationAlpha)
         value = new QVV(rotation, translation, scale)
         break
-      case SampleTypes.Float:
+      case SampleType.Float:
         const float0 = sample0.getFloat()
         const float1 = sample1.getFloat()
         const alpha0 = 1.0 - interpolationData.interpolationAlpha
