@@ -145,13 +145,8 @@ export class Decoder {
       throw new TypeError("'roundingPolicy' must be a RoundingPolicy")
     }
 
-    if (decompressedTracks) {
-      if (!(decompressedTracks instanceof DecompressedTracks)) {
-        throw new TypeError("'decompressedTracks' must be null or a DecompressedTracks instance")
-      }
-    }
-    else {
-      decompressedTracks = new DecompressedTracks(this)
+    if (!decompressedTracks || !(decompressedTracks instanceof DecompressedTracks)) {
+      throw new TypeError("'decompressedTracks' cannot be null and must be a DecompressedTracks instance")
     }
 
     // Make sure we can store our result
@@ -214,14 +209,8 @@ export class Decoder {
         resultBufferU8 = decompressedTracks._mem.array
         resultBufferOffset = trackIndex * sampleSize
       }
-      else if (decompressedTracks instanceof Uint8Array) {
-        resultBufferU8 = decompressedTracks
-      }
-      else if (decompressedTracks instanceof Float32Array) {
-        resultBufferU8 = new Uint8Array(decompressedTracks.buffer)
-      }
       else {
-        throw new TypeError("'decompressedTracks' must be one of a DecompressedTracks, Uint8Array, or Float32Array instance")
+        throw new TypeError("'decompressedTracks' must be a DecompressedTracks instance")
       }
 
       if (resultBufferOffset + sampleSize > resultBufferU8.byteLength) {
