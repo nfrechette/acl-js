@@ -158,7 +158,7 @@ static int compress_transforms(unsigned char* metadata, size_t metadata_size,
 	acl::CompressionSettings settings = acl::get_default_compression_settings();
 	settings.error_metric = &error_metric;
 
-	settings.constant_rotation_threshold_angle = rtm::degrees(static_cast<float>(track_descriptions->constant_rotation_threshold));
+	settings.constant_rotation_threshold_angle = rtm::radians(static_cast<float>(track_descriptions->constant_rotation_threshold));
 	settings.constant_translation_threshold = static_cast<float>(track_descriptions->constant_translaton_threshold);
 	settings.constant_scale_threshold = static_cast<float>(track_descriptions->constant_scale_threshold);
 	settings.error_threshold = static_cast<float>(track_descriptions->precision);
