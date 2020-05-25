@@ -26,7 +26,17 @@ import { Decoder } from './decoder.js'
 import { SampleTypes } from './sample_types.js'
 import { TrackError } from './track_error.js'
 
+////////////////////////////////////////////////////////////////////////////////
+// A CompressedTracks instance wraps an ArrayBuffer or Uint8Array that contains
+// an ACL compressed buffer. This buffer must have been created either with the
+// provided JS encoder or with a compatible ACL executable.
+// The data within is read-only and contains a optional error information (present
+// only when the JS encoder is used).
+////////////////////////////////////////////////////////////////////////////////
 export class CompressedTracks {
+  ////////////////////////////////////////////////////////////////////////////////
+  // Construct a CompressedTracks instance from an ArrayBuffer or Uint8Array
+  // and an optional TrackError description.
   constructor(buffer, trackError) {
     if (!buffer) {
       throw new TypeError("'buffer' must be an ArrayBuffer or Uint8Array")
@@ -92,22 +102,34 @@ export class CompressedTracks {
     this._error = trackError ? trackError : null
   }
 
+  ////////////////////////////////////////////////////////////////////////////////
+  // Returns the length of the compressed buffer in bytes.
   get byteLength() {
     return this._array ? this._array.byteLength : this._mem.byteLength
   }
 
+  ////////////////////////////////////////////////////////////////////////////////
+  // Returns the Uint8Array instance of the compressed buffer.
   get array() {
     return this._array ? this._array : this._mem.array
   }
 
+  ////////////////////////////////////////////////////////////////////////////////
+  // Returns true if this compressed buffer has been bound to a decoder instance, false otherwise.
   get isBound() {
     return !!this._decoder
   }
 
+  ////////////////////////////////////////////////////////////////////////////////
+  // Returns a TrackError instance if present, or null
   get error() {
     return this._error
   }
 
+  ////////////////////////////////////////////////////////////////////////////////
+  // Binds this compressed buffer to the provided Decoder instance.
+  // This copies the buffer into the decoder WASM heap, releasing the old buffer.
+  // A CompressedTracks instance must be bound before it can be used to decompress.
   bind(decoder) {
     if (!decoder || !(decoder instanceof Decoder)) {
       throw new TypeError("'decoder' must be a Decoder instance")
@@ -126,6 +148,10 @@ export class CompressedTracks {
     this._decoder = decoder
   }
 
+  ////////////////////////////////////////////////////////////////////////////////
+  // Disposes of the WASM memory used in the bound decoder (if bound).
+  // Because WASM cannot read JS heap memory, we have to copy data into the WASM heap
+  // and as such we have to rely on manual memory management.
   dispose() {
     if (this._mem) {
       this._decoder.free(this._mem)

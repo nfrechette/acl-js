@@ -24,6 +24,10 @@
 
 import { RoundingPolicy, isRoundingPolicy } from './rounding_policy.js'
 
+//////////////////////////////////////////////////////////////////////////
+// Calculates the sample indices and the interpolation required to linearly
+// interpolate when the samples are uniform.
+// The returned sample indices are clamped and do not loop.
 export const findLinearInterpolationSamplesWithSampleRate = function(numSamples, sampleRate, sampleTime, roundingPolicy) {
   if (!Number.isInteger(numSamples) || numSamples < 0) {
     throw new RangeError(`Invalid number of samples: ${numSamples}`)

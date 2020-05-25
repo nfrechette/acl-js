@@ -25,7 +25,13 @@
 import { Quat } from './quat.js'
 import { Vec3 } from './vec3.js'
 
+////////////////////////////////////////////////////////////////////////////////
+// Represents a Quaternion-Vector3-Vector3 instance which encapsulates a
+// rotation, translation, and 3D scale.
+////////////////////////////////////////////////////////////////////////////////
 export class QVV {
+  ////////////////////////////////////////////////////////////////////////////////
+  // Constructs an instance from its rotation, translation, and scale parts.
   constructor(rotation, translation, scale) {
     if (!(rotation instanceof Quat)) {
       throw new TypeError("'rotation' must be a Quat")
@@ -44,10 +50,14 @@ export class QVV {
     this.scale = scale
   }
 
+  ////////////////////////////////////////////////////////////////////////////////
+  // Returns true if the rotation, translation, and scale are all valid.
   isValid() {
     return this.rotation.isValid() && this.translation.isValid() && this.scale.isValid()
   }
 
+  ////////////////////////////////////////////////////////////////////////////////
+  // Returns a new instance of the QVV identity.
   static get identity() {
     return new QVV(Quat.identity, Vec3.zero, Vec3.one)
   }

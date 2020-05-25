@@ -28,6 +28,8 @@ import { Sample } from './sample.js'
 import { ScalarTrackDescription, TransformTrackDescription } from './track_desc.js'
 
 export class Track {
+  //////////////////////////////////////////////////////////////////////////
+  // Number of metadata floats required
   static getMetadataSize(sampleType) {
     // Ignore sample type, num samples, sample rate since they are identical for all tracks
     // within a track array
@@ -41,6 +43,10 @@ export class Track {
     }
   }
 
+  //////////////////////////////////////////////////////////////////////////
+  // Constructs a Track instance.
+  // For performance reasons, samples and metadata are written at a specific position in
+  // larger arrays of data.
   constructor(sampleType, numSamples, sampleRate, rawData, rawDataOffset, metadata, metadataOffset) {
     if (!isSampleType(sampleType)) {
       throw new TypeError("'type' must be a SampleType")
@@ -125,18 +131,28 @@ export class Track {
     }
   }
 
+  //////////////////////////////////////////////////////////////////////////
+  // Returns the number of samples contained within the track.
   get numSamples() {
     return this._numSamples
   }
 
+  //////////////////////////////////////////////////////////////////////////
+  // Returns the sample type of this track.
   get sampleType() {
     return this._sampleType
   }
 
+
+  //////////////////////////////////////////////////////////////////////////
+  // Returns the track sample rate.
+  // A track has its sampled uniformly distributed in time at a fixed rate (e.g. 30 samples per second).
   get sampleRate() {
     return this._sampleRate
   }
 
+  //////////////////////////////////////////////////////////////////////////
+  // Returns the size in bytes of each track sample.
   get sampleSize() {
     switch (this.sampleType) {
       case SampleTypes.QVV:       return (4 + 3 + 3) * 4
@@ -145,6 +161,8 @@ export class Track {
     }
   }
 
+  //////////////////////////////////////////////////////////////////////////
+  // Returns the duration for this track.
   get duration() {
     if (this._numSamples === 0) {
       // No samples means no duration
@@ -160,10 +178,14 @@ export class Track {
     return (this._numSamples - 1) / this._sampleRate
   }
 
+  //////////////////////////////////////////////////////////////////////////
+  // Returns the track description.
   get description() {
     return this._desc
   }
 
+  //////////////////////////////////////////////////////////////////////////
+  // Returns the sample at the specified index.
   at(sampleIndex) {
     if (sampleIndex < 0 || sampleIndex >= this._numSamples) {
       throw new RangeError('Invalid sample index');
@@ -172,6 +194,8 @@ export class Track {
     return this._samples[sampleIndex]
   }
 
+  //////////////////////////////////////////////////////////////////////////
+  // Returns true if this track contains valid data.
   isValid() {
     if (!this._desc.isValid()) {
       return false
