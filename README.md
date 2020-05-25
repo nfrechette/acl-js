@@ -92,7 +92,7 @@ compressedTracks.dispose() // only required if we actually bound it to a decoder
 decompressedTracks.dispose()
 ```
 
-## How to contribute or built locally
+## How to contribute or build locally
 
 If you wish to run the unit tests or contribute to `acl-js`, head on over to the [development setup](./docs/development_setup.md) section in order to setup your environment and make sure to check out the [contributing guidelines](CONTRIBUTING.md).
 
