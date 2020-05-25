@@ -57,6 +57,10 @@ export class Sample {
       throw new TypeError('Sample is not a QVV')
     }
 
+    if (!qvv) {
+      qvv = QVV.identity
+    }
+
     const rawDataOffset = this._rawDataOffset
     qvv.rotation.x = this._rawData[rawDataOffset + 0]
     qvv.rotation.y = this._rawData[rawDataOffset + 1]
