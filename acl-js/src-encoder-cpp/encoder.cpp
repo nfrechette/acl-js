@@ -138,7 +138,7 @@ static int compress_transforms(unsigned char* metadata, size_t metadata_size,
 	const float sample_rate = static_cast<float>(metadata_[3]);
 
 	const size_t expected_metadata_size = sizeof(double) * 4 + sizeof(qvv_track_description) * num_tracks;
-	if (expected_metadata_size != metadata_size)
+	if (metadata_size < expected_metadata_size)
 		return -1;	// Invalid metadata size
 
 	const size_t expected_raw_data_size = sizeof(double) * 10 * num_samples_per_track * num_tracks;
@@ -205,7 +205,7 @@ static int compress_scalars(unsigned char* metadata, size_t metadata_size,
 	const float sample_rate = static_cast<float>(metadata_[3]);
 
 	const size_t expected_metadata_size = sizeof(double) * 4 + sizeof(scalar_track_description) * num_tracks;
-	if (expected_metadata_size != metadata_size)
+	if (metadata_size < expected_metadata_size)
 		return -1;	// Invalid metadata size
 
 	const size_t expected_raw_data_size = sizeof(double) * num_samples_per_track * num_tracks;

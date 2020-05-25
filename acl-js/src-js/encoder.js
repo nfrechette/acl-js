@@ -81,7 +81,7 @@ export class Encoder {
     // Add a bit of padding to account for our header, etc
     // We'll use the raw data buffer for our output as well
     const rawDataBufferSize = tracks._rawData.byteLength + (64 * 1024)
-    const metadataBufferSize = tracks._metadata.byteLength
+    const metadataBufferSize = tracks._metadata.byteLength + 64
 
     // Allocate a single buffer for efficiency
     const totalBufferSize = rawDataBufferSize + metadataBufferSize
