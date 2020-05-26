@@ -19,6 +19,7 @@ def parse_argv():
 	actions.add_argument('-build', action='store_true')
 	actions.add_argument('-clean', action='store_true')
 	actions.add_argument('-unit_test', action='store_true')
+	actions.add_argument('-pack', action='store_true')
 
 	target = parser.add_argument_group(title='Target')
 	target.add_argument('-config', choices=['Debug', 'Release'], type=str.capitalize)
@@ -34,7 +35,7 @@ def parse_argv():
 	if not num_threads or num_threads == 0:
 		num_threads = 4
 
-	parser.set_defaults(build=False, clean=False, unit_test=False, config='Release', num_threads=num_threads, tests_matching='')
+	parser.set_defaults(build=False, clean=False, unit_test=False, pack=False, config='Release', num_threads=num_threads, tests_matching='')
 
 	args = parser.parse_args()
 
@@ -108,13 +109,41 @@ def do_build(install_dir, js_dir, args):
 def do_tests(args):
 	print('No unit tests specific to this library yet, contributions welcome!')
 
+def do_pack(root_dir, js_dir, staging_dir, args):
+	print('Packaging NPM module ...')
+
+	# Clean our previous packing data
+	if os.path.exists(staging_dir):
+		shutil.rmtree(staging_dir)
+
+	print('Copying acl-js ...')
+	shutil.copytree(js_dir, staging_dir)
+	shutil.copy(os.path.join(root_dir, 'CHANGELOG.md'), staging_dir)
+	shutil.copy(os.path.join(root_dir, 'README.md'), staging_dir)
+	shutil.copy(os.path.join(root_dir, 'LICENSE'), staging_dir)
+
+	print('Removing what we don\'t need ...')
+	encoder_dir = os.path.join(staging_dir, 'src-encoder-cpp')
+	shutil.rmtree(encoder_dir)
+	decoder_dir = os.path.join(staging_dir, 'src-decoder-cpp')
+	shutil.rmtree(decoder_dir)
+
+	print('Running npm pack ...')
+	os.chdir(staging_dir)
+	result = subprocess.call('npm pack', shell=True)
+	if result != 0:
+		print('Packing failed!')
+		sys.exit(result)
+
 if __name__ == "__main__":
 	args = parse_argv()
 
-	build_dir = os.path.join(os.getcwd(), 'build')
-	install_dir = os.path.join(os.getcwd(), 'bin')
-	js_dir = os.path.join(os.getcwd(), 'acl-js')
-	test_data_dir = os.path.join(os.getcwd(), 'test_data')
+	root_dir = os.getcwd()
+	build_dir = os.path.join(root_dir, 'build')
+	install_dir = os.path.join(root_dir, 'bin')
+	js_dir = os.path.join(root_dir, 'acl-js')
+	test_data_dir = os.path.join(root_dir, 'test_data')
+	staging_dir = os.path.join(root_dir, 'staging')
 
 	if args.clean:
 		print('Cleaning previous build ...')
@@ -136,6 +165,10 @@ if __name__ == "__main__":
 	# Make sure 'make' runs with all available cores
 	os.environ['MAKEFLAGS'] = '-j{}'.format(args.num_threads)
 
+	if args.pack:
+		# Always build when we pack to get latest
+		args.build = True
+
 	do_generate_solution(install_dir, args)
 
 	if args.build:
@@ -143,5 +176,8 @@ if __name__ == "__main__":
 
 	if args.unit_test:
 		do_tests(args)
+
+	if args.pack:
+		do_pack(root_dir, js_dir, staging_dir, args)
 
 	sys.exit(0)
