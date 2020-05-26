@@ -22,7 +22,7 @@
 // SOFTWARE.
 ////////////////////////////////////////////////////////////////////////////////
 
-import { SampleType, isSampleType, sampleTypeToMetadata, getNumFloatsPerSample } from './sample_types.js'
+import { SampleType, isSampleType, sampleTypeToMetadata, getNumFloatsPerSample } from './sample_type.js'
 import { isRoundingPolicy } from './rounding_policy.js'
 import { Track } from './track.js'
 import { QVV } from './qvv.js'
