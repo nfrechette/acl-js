@@ -1,4 +1,6 @@
 [![CLA assistant](https://cla-assistant.io/readme/badge/nfrechette/acl-js)](https://cla-assistant.io/nfrechette/acl-js)
+[![NPM Package](https://img.shields.io/npm/v/@nfrechette/acl)](https://www.npmjs.com/package/@nfrechette/acl)
+[![Build Size](https://img.shields.io/bundlephobia/minzip/@nfrechette/acl)](https://bundlephobia.com/result?p=@nfrechette/acl)
 [![Build status](https://github.com/nfrechette/acl-js/workflows/build/badge.svg)](https://github.com/nfrechette/acl-js/actions)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/nfrechette/acl-js/master/LICENSE)
 [![Discord](https://img.shields.io/discord/691048241864769647?label=discord)](https://discord.gg/UERt4bS)
