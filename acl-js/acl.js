@@ -29,6 +29,7 @@ export { Quat } from './src-js/quat.js'
 export { QVV } from './src-js/qvv.js'
 export { Vec3 } from './src-js/vec3.js'
 export { RoundingPolicy, isRoundingPolicy } from './src-js/rounding_policy.js'
+export { CompressedTracks } from './src-js/compressed_tracks.js'
 
 ////////////////////////////////////////////////////////////////////////////////
 // Compression types
