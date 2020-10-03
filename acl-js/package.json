@@ -1,7 +1,7 @@
 {
   "name": "@nfrechette/acl",
   "productName": "Animation Compression Library JavaScript Bindings",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Compress animated time series using the Animation Compression Library.",
   "browser": "acl.js",
   "scripts": {
