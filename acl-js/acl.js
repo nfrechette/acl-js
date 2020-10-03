@@ -22,11 +22,17 @@
 // SOFTWARE.
 ////////////////////////////////////////////////////////////////////////////////
 
+////////////////////////////////////////////////////////////////////////////////
+// Core types
+
 export { Quat } from './src-js/quat.js'
 export { QVV } from './src-js/qvv.js'
 export { Vec3 } from './src-js/vec3.js'
-
 export { RoundingPolicy, isRoundingPolicy } from './src-js/rounding_policy.js'
+
+////////////////////////////////////////////////////////////////////////////////
+// Compression types
+
 export { Sample } from './src-js/sample.js'
 export { SampleType, isSampleType } from './src-js/sample_type.js'
 export { Track } from './src-js/track.js'
@@ -34,6 +40,9 @@ export { TrackArray } from './src-js/track_array.js'
 export { TrackError } from './src-js/track_error.js'
 export { ScalarTrackDescription, TransformTrackDescription } from './src-js/track_desc.js'
 export { Encoder } from './src-js/encoder.js'
+
+////////////////////////////////////////////////////////////////////////////////
+// Decompression types
 
 export { DecompressedTracks } from './src-js/decompressed_tracks.js'
 export { Decoder } from './src-js/decoder.js'
