@@ -61,24 +61,7 @@ export class CompressedTracks {
     // uint32 tag
     const bufferHeader = new Uint32Array(this._array.buffer, 0, 3)
 
-    if (bufferHeader[2] == 0xac10ac10) {
-      // CompressedClip is 16 bytes, ClipHeader is 20 bytes + offsets
-      const compressedClipHeaderSize = 4 + 5
-      const compressedClipHeader = new Uint32Array(this._array.buffer, 0, compressedClipHeaderSize)
-
-      this.version = compressedClipHeader[3] & 0xFFFF
-      this.numTracks = compressedClipHeader[4] & 0xFFFF
-      this.numSegments = compressedClipHeader[4] >> 16
-      this.hasScale = compressedClipHeader[5] >> 24
-      this.numSamplesPerTrack = compressedClipHeader[7]
-      //this.sampleRate = compressedClipHeader[8]
-
-      // QVV is 12 floats each
-      this.outputBufferSize = this.numTracks * 12 * 4
-      this.sampleSize = 12 * 4
-      this.sampleType = SampleType.QVV
-    }
-    else if (bufferHeader[2] == 0xac11ac11) {
+    if (bufferHeader[2] == 0xac11ac11) {
       // compressed_tracks is 8 bytes for raw buffer header, and 24 bytes for the tracks header
       const compressedTracksHeaderSize = 2 + 6
       const compressedTracksHeader = new Uint32Array(this._array.buffer, 0, compressedTracksHeaderSize)
@@ -86,12 +69,24 @@ export class CompressedTracks {
       this.version = compressedTracksHeader[3] & 0xFFFF
       this.numTracks = compressedTracksHeader[4]
       this.numSamplesPerTrack = compressedTracksHeader[5]
-      //this.sampleRate = compressedTracksHeader[6]
+      this.sampleRate = compressedTracksHeader[6]
 
-      // 1 float per track
-      this.outputBufferSize = this.numTracks * 4
-      this.sampleSize = 4
-      this.sampleType = SampleType.Float
+      const trackType = (compressedTracksHeader[3] >> 24) & 0xFF
+      if (trackType == 0) {
+        // 1 float per track
+        this.outputBufferSize = this.numTracks * 4
+        this.sampleSize = 4
+        this.sampleType = SampleType.Float
+      }
+      else if (trackType == 12) {
+        // QVV is 12 floats each
+        this.outputBufferSize = this.numTracks * 12 * 4
+        this.sampleSize = 12 * 4
+        this.sampleType = SampleType.QVV
+      }
+      else {
+        throw new Error(`Unsupported track type: ${trackType}`)
+      }
     }
     else {
       throw new Error('Unrecognized compressed buffer')
