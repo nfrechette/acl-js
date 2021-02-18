@@ -141,8 +141,8 @@ export class TransformTrackDescription {
 
     this.precision = 0.0001 // 0.01cm
     this.shellDistance = 1.0 // 1.0m
-    this.constantRotationThreshold = 0.00284714461 // radians
-    this.constantTranslatonThreshold = 0.00001 // 0.001cm
+    this.constantRotationThresholdAngle = 0.00284714461 // radians
+    this.constantTranslationThreshold = 0.00001 // 0.001cm
     this.constantScaleThreshold = 0.00001
   }
 
@@ -223,8 +223,8 @@ export class TransformTrackDescription {
   // You will typically NEVER need to change this, the value has been
   // selected to be as safe as possible and is independent of game engine units.
   // Defaults to '0.00284714461' radians
-  get constantRotationThreshold() {
-    return this._constantRotationThreshold
+  get constantRotationThresholdAngle() {
+    return this._constantRotationThresholdAngle
   }
 
   //////////////////////////////////////////////////////////////////////////
@@ -232,8 +232,8 @@ export class TransformTrackDescription {
   // You will typically NEVER need to change this, the value has been
   // selected to be as safe as possible and is independent of game engine units.
   // Defaults to '0.00284714461' radians
-  set constantRotationThreshold(value) {
-    this._constantRotationThreshold = value
+  set constantRotationThresholdAngle(value) {
+    this._constantRotationThresholdAngle = value
     this._metadata[this._metadataOffset + 4] = value
   }
 
@@ -241,16 +241,16 @@ export class TransformTrackDescription {
   // Threshold value to use when detecting if translation tracks are constant or default.
   // Note that you will need to change this value if your units are not in meters.
   // Defaults to '0.00001' meters.
-  get constantTranslatonThreshold() {
-    return this._constantTranslatonThreshold
+  get constantTranslationThreshold() {
+    return this._constantTranslationThreshold
   }
 
   //////////////////////////////////////////////////////////////////////////
   // Threshold value to use when detecting if translation tracks are constant or default.
   // Note that you will need to change this value if your units are not in meters.
   // Defaults to '0.00001' meters.
-  set constantTranslatonThreshold(value) {
-    this._constantTranslatonThreshold = value
+  set constantTranslationThreshold(value) {
+    this._constantTranslationThreshold = value
     this._metadata[this._metadataOffset + 5] = value
   }
 
@@ -292,11 +292,11 @@ export class TransformTrackDescription {
       return false
     }
 
-    if (!Number.isFinite(this._constantRotationThreshold) || this._constantRotationThreshold < 0.0 || this._constantRotationThreshold >= 100.0) {
+    if (!Number.isFinite(this._constantRotationThresholdAngle) || this._constantRotationThresholdAngle < 0.0 || this._constantRotationThresholdAngle >= 100.0) {
       return false
     }
 
-    if (!Number.isFinite(this._constantTranslatonThreshold) || this._constantTranslatonThreshold < 0.0 || this._constantTranslatonThreshold >= 100.0) {
+    if (!Number.isFinite(this._constantTranslationThreshold) || this._constantTranslationThreshold < 0.0 || this._constantTranslationThreshold >= 100.0) {
       return false
     }
 
