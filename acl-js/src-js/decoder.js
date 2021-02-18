@@ -93,7 +93,7 @@ export class Decoder {
 
   ////////////////////////////////////////////////////////////////////////////////
   // Allocate memory in the WASM heap
-  // Memory allocated is always 16 bytes aligned and a multiply of 16 bytes
+  // Memory allocated is always 16 bytes aligned and a multiple of 16 bytes
   malloc(bufferSize) {
     if (!wasmState.module) {
       throw new Error('WASM module not ready')
