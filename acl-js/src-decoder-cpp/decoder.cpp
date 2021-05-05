@@ -24,15 +24,14 @@
 
 #include "decoder.h"
 
-#include <acl/algorithm/uniformly_sampled/decoder.h>
+#include <acl/core/track_writer.h>
 #include <acl/decompression/decompress.h>
-#include <acl/decompression/default_output_writer.h>
 
 #include <cstdint>
 
 struct scalar_decompression_settings final : public acl::decompression_settings
 {
-	constexpr bool is_track_type_supported(acl::track_type8 type) const { return type == acl::track_type8::float1f; }
+	static constexpr bool is_track_type_supported(acl::track_type8 type) { return type == acl::track_type8::float1f; }
 };
 
 struct scalar_track_writer final : public acl::track_writer
@@ -44,9 +43,34 @@ struct scalar_track_writer final : public acl::track_writer
 	{
 	}
 
-	void write_float1(uint32_t track_index, rtm::scalarf_arg0 value)
+	RTM_FORCE_INLINE void RTM_SIMD_CALL write_float1(uint32_t track_index, rtm::scalarf_arg0 value)
 	{
 		output[track_index] = rtm::scalar_cast(value);
+	}
+};
+
+struct transform_track_writer final : public acl::track_writer
+{
+	rtm::qvvf* output;
+
+	transform_track_writer(rtm::qvvf* output_)
+		: output(output_)
+	{
+	}
+
+	RTM_FORCE_INLINE void RTM_SIMD_CALL write_rotation(uint32_t track_index, rtm::quatf_arg0 rotation)
+	{
+		output[track_index].rotation = rotation;
+	}
+
+	RTM_FORCE_INLINE void RTM_SIMD_CALL write_translation(uint32_t track_index, rtm::vector4f_arg0 translation)
+	{
+		output[track_index].translation = translation;
+	}
+
+	RTM_FORCE_INLINE void RTM_SIMD_CALL write_scale(uint32_t track_index, rtm::vector4f_arg0 scale)
+	{
+		output[track_index].scale = scale;
 	}
 };
 
@@ -59,10 +83,38 @@ struct single_scalar_track_writer final : public acl::track_writer
 	{
 	}
 
-	void write_float1(uint32_t track_index, rtm::scalarf_arg0 value)
+	RTM_FORCE_INLINE void RTM_SIMD_CALL write_float1(uint32_t track_index, rtm::scalarf_arg0 value)
 	{
 		(void)track_index;
 		*output = rtm::scalar_cast(value);
+	}
+};
+
+struct single_transform_track_writer final : public acl::track_writer
+{
+	rtm::qvvf* output;
+
+	single_transform_track_writer(rtm::qvvf* output_)
+		: output(output_)
+	{
+	}
+
+	RTM_FORCE_INLINE void RTM_SIMD_CALL write_rotation(uint32_t track_index, rtm::quatf_arg0 rotation)
+	{
+		(void)track_index;
+		output->rotation = rotation;
+	}
+
+	RTM_FORCE_INLINE void RTM_SIMD_CALL write_translation(uint32_t track_index, rtm::vector4f_arg0 translation)
+	{
+		(void)track_index;
+		output->translation = translation;
+	}
+
+	RTM_FORCE_INLINE void RTM_SIMD_CALL write_scale(uint32_t track_index, rtm::vector4f_arg0 scale)
+	{
+		(void)track_index;
+		output->scale = scale;
 	}
 };
 
@@ -71,37 +123,41 @@ int decompress_tracks(const unsigned char* compressed_buffer, size_t compressed_
 	if (compressed_buffer == nullptr)
 		return -1;	// Invalid argument
 
-	const acl::CompressedClip* compressed_clip = reinterpret_cast<const acl::CompressedClip*>(compressed_buffer);
-	if (compressed_clip->is_valid(false).empty())
+	const acl::compressed_tracks* compressed_tracks = reinterpret_cast<const acl::compressed_tracks*>(compressed_buffer);
+	if (compressed_tracks->is_valid(false).any())
+		return -2;	// Compressed data is corrupted or invalid
+
+	const acl::track_type8 track_type = compressed_tracks->get_track_type();
+	if (track_type == acl::track_type8::qvvf)
 	{
-		if (compressed_buffer_size < compressed_clip->get_size())
+		// A transform clip
+		if (compressed_buffer_size < compressed_tracks->get_size())
 			return -1;	// Invalid compressed clip buffer
 
-		const acl::ClipHeader& header = acl::get_clip_header(*compressed_clip);
-		const size_t expected_output_buffer_size = header.num_bones * sizeof(rtm::qvvf);
+		const uint32_t num_tracks = compressed_tracks->get_num_tracks();
+		const size_t expected_output_buffer_size = num_tracks * sizeof(rtm::qvvf);
 		if (output_buffer_size < expected_output_buffer_size)
 			return -3;	// Output buffer is too small
 
 		if (!acl::is_aligned_to(output_buffer, alignof(rtm::qvvf)))
 			return -4;	// Output buffer isn't aligned properly
 
-		acl::uniformly_sampled::DecompressionContext<acl::uniformly_sampled::DefaultDecompressionSettings> context;
-		context.initialize(*compressed_clip);
+		acl::decompression_context<acl::default_transform_decompression_settings> context;
+		if (!context.initialize(*compressed_tracks))
+			return -5;	// Failed to initialize our context
 
 		const acl::sample_rounding_policy rounding_policy_ = static_cast<acl::sample_rounding_policy>(rounding_policy);
 		context.seek(sample_time, rounding_policy_);
 
 		rtm::qvvf* output_buffer_ = reinterpret_cast<rtm::qvvf*>(output_buffer);
-		acl::DefaultOutputWriter pose_writer(output_buffer_, header.num_bones);
-		context.decompress_pose(pose_writer);
+		transform_track_writer pose_writer(output_buffer_);
+		context.decompress_tracks(pose_writer);
 
 		return 0;
 	}
-
-	const acl::compressed_tracks* compressed_tracks = reinterpret_cast<const acl::compressed_tracks*>(compressed_buffer);
-
-	if (compressed_tracks->is_valid(false).empty())
+	else if (track_type == acl::track_type8::float1f)
 	{
+		// A scalar clip
 		if (compressed_buffer_size < compressed_tracks->get_size())
 			return -1;	// Invalid compressed tracks buffer
 
@@ -114,7 +170,8 @@ int decompress_tracks(const unsigned char* compressed_buffer, size_t compressed_
 			return -4;	// Output buffer isn't aligned properly
 
 		acl::decompression_context<scalar_decompression_settings> context;
-		context.initialize(*compressed_tracks);
+		if (!context.initialize(*compressed_tracks))
+			return -5;	// Failed to initialize our context
 
 		const acl::sample_rounding_policy rounding_policy_ = static_cast<acl::sample_rounding_policy>(rounding_policy);
 		context.seek(sample_time, rounding_policy_);
@@ -125,8 +182,11 @@ int decompress_tracks(const unsigned char* compressed_buffer, size_t compressed_
 
 		return 0;
 	}
-
-	return -2;	// Compressed data is corrupted or invalid
+	else
+	{
+		// An unsupported track type
+		return -10;
+	}
 }
 
 int decompress_track(const unsigned char* compressed_buffer, size_t compressed_buffer_size, float sample_time, int rounding_policy, int track_index, unsigned char* output_buffer, size_t output_buffer_size)
@@ -134,10 +194,15 @@ int decompress_track(const unsigned char* compressed_buffer, size_t compressed_b
 	if (compressed_buffer == nullptr)
 		return -1;	// Invalid argument
 
-	const acl::CompressedClip* compressed_clip = reinterpret_cast<const acl::CompressedClip*>(compressed_buffer);
-	if (compressed_clip->is_valid(false).empty())
+	const acl::compressed_tracks* compressed_tracks = reinterpret_cast<const acl::compressed_tracks*>(compressed_buffer);
+	if (compressed_tracks->is_valid(false).any())
+		return -2;	// Compressed data is corrupted or invalid
+
+	const acl::track_type8 track_type = compressed_tracks->get_track_type();
+	if (track_type == acl::track_type8::qvvf)
 	{
-		if (compressed_buffer_size < compressed_clip->get_size())
+		// A transform clip
+		if (compressed_buffer_size < compressed_tracks->get_size())
 			return -1;	// Invalid compressed clip buffer
 
 		if (output_buffer_size < sizeof(rtm::qvvf))
@@ -146,26 +211,26 @@ int decompress_track(const unsigned char* compressed_buffer, size_t compressed_b
 		if (!acl::is_aligned_to(output_buffer, alignof(rtm::qvvf)))
 			return -4;	// Output buffer isn't aligned properly
 
-		const acl::ClipHeader& header = acl::get_clip_header(*compressed_clip);
-		if (static_cast<uint32_t>(track_index) >= header.num_bones)
+		const uint32_t num_tracks = compressed_tracks->get_num_tracks();
+		if (static_cast<uint32_t>(track_index) >= num_tracks)
 			return -5;	// Invalid transform index
 
-		acl::uniformly_sampled::DecompressionContext<acl::uniformly_sampled::DefaultDecompressionSettings> context;
-		context.initialize(*compressed_clip);
+		acl::decompression_context<acl::default_transform_decompression_settings> context;
+		if (!context.initialize(*compressed_tracks))
+			return -6;	// Failed to initialize our context
 
 		const acl::sample_rounding_policy rounding_policy_ = static_cast<acl::sample_rounding_policy>(rounding_policy);
 		context.seek(sample_time, rounding_policy_);
 
-		rtm::qvvf& transform = *reinterpret_cast<rtm::qvvf*>(output_buffer);
-		context.decompress_bone(static_cast<uint16_t>(track_index), &transform.rotation, &transform.translation, &transform.scale);
+		rtm::qvvf* output_buffer_ = reinterpret_cast<rtm::qvvf*>(output_buffer);
+		single_transform_track_writer track_writer(output_buffer_);
+		context.decompress_track(static_cast<uint32_t>(track_index), track_writer);
 
 		return 0;
 	}
-
-	const acl::compressed_tracks* compressed_tracks = reinterpret_cast<const acl::compressed_tracks*>(compressed_buffer);
-
-	if (compressed_tracks->is_valid(false).empty())
+	else if (track_type == acl::track_type8::float1f)
 	{
+		// A scalar clip
 		if (compressed_buffer_size < compressed_tracks->get_size())
 			return -1;	// Invalid compressed tracks buffer
 
@@ -180,7 +245,8 @@ int decompress_track(const unsigned char* compressed_buffer, size_t compressed_b
 			return -5;	// Invalid transform index
 
 		acl::decompression_context<scalar_decompression_settings> context;
-		context.initialize(*compressed_tracks);
+		if (!context.initialize(*compressed_tracks))
+			return -6;	// Failed to initialize our context
 
 		const acl::sample_rounding_policy rounding_policy_ = static_cast<acl::sample_rounding_policy>(rounding_policy);
 		context.seek(sample_time, rounding_policy_);
@@ -191,6 +257,9 @@ int decompress_track(const unsigned char* compressed_buffer, size_t compressed_b
 
 		return 0;
 	}
-
-	return -2;	// Clip is corrupted or invalid
+	else
+	{
+		// An unsupported track type
+		return -10;
+	}
 }
