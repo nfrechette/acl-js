@@ -26,7 +26,7 @@ target_compile_options(${PROJECT_NAME} PRIVATE -fno-exceptions)	# Disable except
 target_link_libraries(${PROJECT_NAME} PRIVATE "-s ALLOW_MEMORY_GROWTH=1")	# Allow dynamic memory allocation
 
 # Export a few functions from the emscripten runtime
-target_link_libraries(${PROJECT_NAME} PRIVATE "-s EXPORTED_FUNCTIONS=['__start','_sbrk']")
+target_link_libraries(${PROJECT_NAME} PRIVATE "-s EXPORTED_FUNCTIONS=['__start','_malloc','_free']")
 
 install(FILES
 	${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.wasm
