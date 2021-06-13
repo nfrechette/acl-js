@@ -1,5 +1,9 @@
 # Significant changes per release
 
+## 1.0.0
+
+*  Initial release with ACL 2.0 underneath the hood
+
 ## 0.1.1
 
 *  Add missing CompressedTracks export
